@@ -158,11 +158,11 @@
 								<tbody>
 									<tr>
 										<th></th>
-										<th ng-click="vm.sort('number')">Number</th>
+										<th ng-click="vm.sort('number')">Number <span class="text-muted" ng-class="vm.sortClasses['number']"</th>
 										<th>Summary</th>
-										<th ng-click="vm.sort('status')">Status</th>
-										<th ng-click="vm.sort('created_on')">Created</th>
-										<th ng-click="vm.sort('user_login')">Assigned to</th>
+										<th ng-click="vm.sort('status')">Status <span class="text-muted" ng-class="vm.sortClasses['status']"</th>
+										<th ng-click="vm.sort('created_on')">Created <span class="text-muted" ng-class="vm.sortClasses['created_on']"</th>
+										<th ng-click="vm.sort('user_login')">Assigned to <span class="text-muted" ng-class="vm.sortClasses['user_login']"</th>
 										<th></th>
 										<th></th>
 									</tr>
@@ -175,7 +175,7 @@
 										<td>{{t.status}}</td>
 										<td>{{t.created_on | date:'dd MMM yy'}}</td>
 										<td>{{vm.getUserLogin(t.assigned_to_id)}}</td>
-										<td><span data-ng-repeat="tag in t.tags">{{tag}}<span data-ng-if="!$last"> || </span></td>
+										<td></td>
 										<td data-ng-repeat-end><span class="glyphicon" ng-click="vm.parseDescription(t)"
 												ng-class="{'glyphicon-ok': vm.isValidTicket(t), 'glyphicon-remove': !vm.isValidTicket(t), 
 																		'text-success': vm.isValidTicket(t), 'text-danger': !vm.isValidTicket(t)}">

@@ -53,7 +53,9 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 			vm.options.currentSortColumn = sortField;
 			vm.options.currentSortAscending = true;
 		}
-		
+		vm.sortClasses={} // for display of asc and desc markers
+		vm.sortClasses[sortField] = 'glyphicon glyphicon-chevron-' + (vm.options.currentSortAscending ? 'up' : 'down');
+
 		vm.tickets.sort(function(a,b) {
 			var valA = sortField=="user_login" ? getUserLogin(a.assigned_to_id) : a[sortField];
 			var valB = sortField=="user_login" ? getUserLogin(b.assigned_to_id) : b[sortField];
