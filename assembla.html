@@ -174,7 +174,12 @@
 										<td>{{t.status}}</td>
 										<td>{{t.created_on | date:'dd MMM yy'}}</td>
 										<td>{{vm.getUserLogin(t.assigned_to_id)}}</td>
-										<td data-ng-repeat="tag in t.tags">{{tag}}<span data-ng-if="!$last"> || </span></td>
+										<td>
+											<span  data-ng-repeat="(k,v) in t.parsed">
+												{{k}}
+												<span data-ng-if="!$last">, </span>
+											</span>
+										</td>
 										<td><span class="glyphicon" ng-click="vm.parseDescription(t)"
 												ng-class="{'glyphicon-ok': vm.isValidTicket(t), 'glyphicon-remove': !vm.isValidTicket(t), 
 																		'text-success': vm.isValidTicket(t), 'text-danger': !vm.isValidTicket(t)}">
