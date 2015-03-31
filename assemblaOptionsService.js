@@ -41,7 +41,7 @@ angular.module("assembla")
         ticketsPerPage: aos.options.ticketsPerPage,
         currentPage: aos.options.currentPage,
         currentMilestone: aos.options.currentMilestone,
-        currentSortOrder: aos.options.currentSortOrder,
+        currentSortAscending: aos.options.currentSortAscending,
         currentSortColumn: aos.options.currentSortColumn,
         secret: aos.options.secret,
         key: aos.options.key,
@@ -70,13 +70,13 @@ angular.module("assembla")
         ticketsPerPage: 10,
         currentPage: 1,
         currentMilestone: null,
-        currentSortOrder: null,
+        currentSortAscending: true,
         currentSortColumn: null
       }, function(items) {
         aos.options.ticketsPerPage = items.ticketsPerPage;
         aos.options.currentPage = items.currentPage;
         aos.options.currentMilestone = items.currentMilestone;
-        aos.options.currentSortOrder = items.currentSortOrder;
+        aos.options.currentSortAscending = items.currentSortAscending;
         aos.options.currentSortColumn = items.currentSortColumn;
         aos.options.secret = items.secret;
         aos.options.key = items.key;

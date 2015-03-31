@@ -22,7 +22,7 @@ section { padding: 5px;}
 .nav, .pagination, .carousel, .panel-title a { 
 	cursor: pointer; 
 }
-[ng-click] {
+[ng-click], [data-ng-click] {
 	cursor: pointer;
 }
 

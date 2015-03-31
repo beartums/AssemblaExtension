@@ -34,7 +34,7 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 	vm.parseDescription = parseDescription;
 	vm.addToFilter = addToFilter;
 	vm.filterTickets = filterTickets;
-
+	vm.sort = sort;
 	aos.setOnReadyHandler(refresh);
 
 	return vm;
@@ -46,6 +46,26 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 		});
 	}
 	
+	function sort(sortField) {
+		if (sortField == vm.options.currentSortColumn) {
+			vm.options.currentSortAscending = !vm.options.currentSortAscending;
+		} else {
+			vm.options.currentSortColumn = sortField;
+			vm.options.currentSortAscending = true;
+		}
+		vm.sortClasses={} // for display of asc and desc markers
+		vm.sortClasses[sortField] = 'glyphicon glyphicon-chevron-' + (vm.options.currentSortAscending ? 'up' : 'down');
+
+		vm.tickets.sort(function(a,b) {
+			var valA = sortField=="user_login" ? getUserLogin(a.assigned_to_id) : a[sortField];
+			var valB = sortField=="user_login" ? getUserLogin(b.assigned_to_id) : b[sortField];
+			if (!vm.options.currentSortAscending) { var h = valA; valA=valB; valB = h; }
+			
+			if (valA<valB) return -1;
+			if (valA==valB) return 0;
+			if (valA>valB) return 1;
+		});
+	}
 	function getUserLogin(id) {
 		if (!id || vm.users.length<1) return "";
 		return vm.users.reduce(function(login, user) {
