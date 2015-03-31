@@ -11,7 +11,7 @@
 
 	<!-- Cascading Style Sheets -->
 	<link href="css/bootstrap.css" rel="stylesheet" media="screen">
-	<!--link href="css/custom.css" rel="stylesheet" media="screen"-->
+	<link href="css/custom.css" rel="stylesheet" media="screen">
   </head>
   <body data-ng-controller="assemblaController as vm">
     <div class="container">
@@ -148,23 +148,24 @@
 												data-ng-options="milestone.id as milestone.title for milestone in vm.milestones"> </select>
 							</div>
 						</div>
-						<div class="col-md-2 col-sm-3" id="pageLengthInput">
-							<div class="input-group">
-								<input type="text" class="form-control" ng-model="vm.options.ticketsPerPage" data-ng-change="vm.repaginate()">
-								<span class="input-group-addon">/page</span>
-							</div>
-						</div>
-						<div class="col-md-5 col-sm-6" id="paginator">
-							<div >
-								<pagination style="margin-top:0" total-items="vm.tickets.length" items-per-page="vm.options.ticketsPerPage"
-														ng-model="vm.options.currentPage" ng-change="vm.pageChanged()" direction-links="true" max-size="5">
-							</div>
+						<div class="col-md-3">
+							ticket count: <span class="badge">{{vm.tickets.length}}</span>
 						</div>
 					</div>
 					<div class="row" id="tickets" >
 						<div class="col-md-12">
-							<table class="table">
+							<table class="table" ng-hide="vm.tickets.length==0">
 								<tbody>
+									<tr>
+										<th></th>
+										<th ng-click="vm.sort('number')">Number <span class="text-muted" ng-class="vm.sortClasses['number']"</th>
+										<th>Summary</th>
+										<th ng-click="vm.sort('status')">Status <span class="text-muted" ng-class="vm.sortClasses['status']"</th>
+										<th ng-click="vm.sort('created_on')">Created <span class="text-muted" ng-class="vm.sortClasses['created_on']"</th>
+										<th ng-click="vm.sort('user_login')">Assigned to <span class="text-muted" ng-class="vm.sortClasses['user_login']"</th>
+										<th></th>
+										<th></th>
+									</tr>
 									<tr data-ng-repeat-start="t in vm.tickets | filter : vm.filterTickets">
 										<td data-ng-click="vm.toggle(t,'expanded')">
 											<span class="glyphicon" data-ng-class="{'glyphicon-minus':t.expanded, 'glyphicon-plus':!t.expanded}"></span>
@@ -174,8 +175,8 @@
 										<td>{{t.status}}</td>
 										<td>{{t.created_on | date:'dd MMM yy'}}</td>
 										<td>{{vm.getUserLogin(t.assigned_to_id)}}</td>
-										<td data-ng-repeat="tag in t.tags">{{tag}}<span data-ng-if="!$last"> || </span></td>
-										<td><span class="glyphicon" ng-click="vm.parseDescription(t)"
+										<td></td>
+										<td data-ng-repeat-end><span class="glyphicon" ng-click="vm.parseDescription(t)"
 												ng-class="{'glyphicon-ok': vm.isValidTicket(t), 'glyphicon-remove': !vm.isValidTicket(t), 
 																		'text-success': vm.isValidTicket(t), 'text-danger': !vm.isValidTicket(t)}">
 												</span>
@@ -187,19 +188,6 @@
 								</tbody>
 							</table>
 						</div>
-					</div>
-					<nav id="bottomPager">
-						<ul class="pager">
-							<li><a data-ng-click="vm.pageby(-1)" href="#" ng-class="{disabled:vm.options.currentPage=1}">
-								<span class="glyphicon glyphicon-chevron-left"></span>
-							</a></li>
-							<li><a data-ng-click="vm.pageby(1)" href="#" ng-class="{disabled: vm.tickets.length<vm.options.ticketsPerPage}">
-								<span class="glyphicon glyphicon-chevron-right"></span>
-							</a></li>
-						</ul>
-					</nav>
-					<div>
-						{{vm.tickets.length}}
 					</div>
 				</div>
 			</div>
