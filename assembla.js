@@ -93,7 +93,7 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 			ignoreCustomFields[field.title] = !hasTrueProperty(vm.options.filters[field.title],true);
 		});
 		var id = ticket.assigned_to_id;
-		id = id && id.trim() != "" ? id : "unassigned";
+		id = id && id.trim() != "" ? id : vm._unassigned;
 		if (!ignoreUser && !vm.options.filters.user[id]) return false;
 		if (!ignoreStatus && !vm.options.filters.status[ticket.status]) return false;
 		for (var prop in ignoreCustomFields) {
@@ -188,21 +188,26 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 		var parsed = {};
 		var delim = "_@&@_"; // delimiter
 		d=d.replace(/(?:^|[\r\f\n\v])T(?:ech|echincal)?\s?D(?:esc|escription)?\:/i, delim + "TD" + delim);
-		d=d.replace(/(?:^|[\r\f\n\v])(?:F?(?:riendly))?\s?D(?:esc(?:ription)?)?\:/i, delim + "FD" + delim);
+		d=d.replace(/(?:^|[\r\f\n\v])(?:F?(?:riendly)?)?\s?D(?:esc(?:ription)?)?\:/i, delim + "FD" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])\D(?:esc(?:ription)?)?\:/i, delim + "D" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])\*D(?:esc(?:ription)?)?\*/i, delim + "D" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])L(?:oc(?:ation)?)?\:/i, delim + "L" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])\*L(?:oc(?:ation)?)?\*/i, delim + "L" + delim);
-		d=d.replace(/(?:^|[\r\f\n\v])T(?:est(?:ing|s))(?:\s?I?(?:deas)?)?\:/i, delim + "T" + delim);
-		d=d.replace(/(?:^|[\r\f\n\v])\*T(?:est(?:ing|s))(?:\s?I?(?:deas)?)?\*/i, delim + "T" + delim);
+		d=d.replace(/(?:^|[\r\f\n\v])T(?:est(?:ing|s)?)?(?:\s?I?(?:deas)?)?\:/i, delim + "T" + delim);
+		d=d.replace(/(?:^|[\r\f\n\v])\*T(?:est(?:ing|s)?)?(?:\s?I?(?:deas)?)?\*/i, delim + "T" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])P(?:erm(?:issions)?)?\:/i, delim + "P" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])(?:A(?:uth(?:orization)?)?\s?)?(?:S(?:cope)?)?\:/i, delim + "P" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])R(?:ole(?:s)?)?\:/i, delim + "P" + delim);
-		d=d.replace(/(?:^|[\r\f\n\v])R(?:eported)?(?:\s?B?(?:y)?)?\:/i, delim + "RB" + delim);
+		d=d.replace(/(?:^|[\r\f\n\v])R(?:eported)?(?:\s?B(?:y)?)?\:/i, delim + "RB" + delim);
 		var parts = d.split(delim);
-		if (!/TD|FD|T|L|RP|P/.test(parts[0])) parts.unshift('D');
-		for (var i = 2; i < parts.length; i = i + 2) {
+		if (parts[0].trim()=="") parts.shift();
+		if (!/^(?:TD|FD|T|L|RP|P|D)$/.test(parts[0])) parts.unshift('O');
+		for (var i = 1; i < parts.length; i = i + 2) {
 			parsed[parts[i-1]] = parts[i];
+		}
+		if (parsed.O && !parsed.D) {
+			parsed.D = parsed.O;
+			delete parsed.O;
 		}
 		ticket.parsed = parsed;		
 	}

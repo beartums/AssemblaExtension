@@ -52,13 +52,13 @@
 											{{u.login}}
 									</a>
 									<a class="list-group-item" 
-											ng-class="{active:vm.options.filters.user.unassigned}"
+											ng-class="{active:vm.options.filters.user[vm._unassigned]}"
 											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assignedTo[vm._unassigned] || vm.ticketCount.assignedTo[vm._unassigned]==0)"
 											ng-click="vm.addToFilter('user',vm._unassigned)">
 											<span class="badge" ng-if="vm.ticketCount.assignedTo[vm._unassigned] && vm.ticketCount.assignedTo[vm._unassigned]>0">
 												{{!vm.ticketCount.assignedTo[vm._unassigned] ? 0 : vm.ticketCount.assignedTo[vm._unassigned]}}
 											</span>
-											unassigned
+											{{vm._unassigned}}
 									</a>
 								</ul>
 							</div>
@@ -152,7 +152,7 @@
 							ticket count: <span class="badge">{{vm.tickets.length}}</span>
 						</div>
 					</div>
-					<div class="row" id="tickets" >
+					<div class="row" id="ticketstable" >
 						<div class="col-md-12">
 							<table class="table" ng-hide="vm.tickets.length==0">
 								<tbody>
@@ -181,10 +181,11 @@
 												<span data-ng-if="!$last">, </span>
 											</span>
 										</td>
-										<td><span class="glyphicon" ng-click="vm.parseDescription(t)"
-												ng-class="{'glyphicon-ok': vm.isValidTicket(t), 'glyphicon-remove': !vm.isValidTicket(t), 
+										<td ><span class="glyphicon" data-ng-click="vm.parseDescription(t)"
+												data-ng-class="{'glyphicon-ok': vm.isValidTicket(t), 'glyphicon-remove': !vm.isValidTicket(t), 
 																		'text-success': vm.isValidTicket(t), 'text-danger': !vm.isValidTicket(t)}">
 												</span>
+										</td>
 									</tr>
 									<tr data-ng-if="t.expanded" data-ng-repeat-end>
 										<td></td>
