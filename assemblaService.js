@@ -20,6 +20,8 @@ angular.module("assembla")
 			getStatuses: getStatuses,
 			getRoles: getRoles,
 			getCustomFields: getCustomFields,
+			getTicket: getTicket,
+			getActivity: getActivity,
       init: init
     };
 		
@@ -64,23 +66,50 @@ angular.module("assembla")
     function getTickets(qObj) {
       var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
         "/tickets/milestone/" + qObj.milestoneId + ".json";
-			if (qObj.parms) url += makeUrlParms(qObj.parms);
       
-      var p = $http.get(url,reqObj)
+      return getData(url,qObj);
+    }
+
+		function getData(url, qObj, callingProcedure) {
+			if (!qObj.parms) qObj.parms = {};
+			if (!qObj.parms.per_page) qObj.parms.per_page = 100;
+			if (!qObj.parms.page) qObj.parms.page = 1;
+			var gdUrl = url;
+			if (gdUrl.indexOf('?') > -1) gdUrl = gdUrl.substring(0,gdUrl.indexOf('?'))
 			
-			if (!qObj.dataObject && !qObj.dataHandler) return p;
+			gdUrl += makeUrlParms(qObj.parms)
+			
+			var p = $http.get(gdUrl,reqObj);
+			
+			if (qObj.doNotPage) return p;
 			return p.success(function(data) {
-				if (!data) return qObj.dataObject;
 				if (qObj.dataHandler) {
 					qObj.dataHandler(data);
 				} else if (qObj.dataObject) {
-					data.forEach(function(item) { qObj.dataObject.push(item);	});
-				}
-				if (data.length<qObj.perPage) return qObj.dataObject;
+					data.forEach(function(item) {qObj.dataObject.push(item); });
+				} 
+				if (!qObj.returnedData) qObj.returnedData=[];
+				data.forEach(function(item) {qObj.returnedData.push(item); });
+
+				if (data.length < qObj.parms.per_page) return qObj.returnedData;
 				qObj.parms.page++;
-				return getTickets(qObj);
+				return getData(url,qObj);
 			});
-    }
+		}
+		
+		function getTicket(qObj) {
+			var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
+        "/tickets/" + qObj.ticketId + ".json";
+			if (qObj.parms) url += makeUrlParms(qObj.parms);
+			
+			return $http.get(url,reqObj);
+		}
+			
+		function getActivity(qObj) {
+			var url = "https://api.assembla.com/v1/activity.json"
+			
+			return getData(url,qObj);
+		}
 
     function getSpaces() {
       var url = "https://api.assembla.com/v1/spaces.json"

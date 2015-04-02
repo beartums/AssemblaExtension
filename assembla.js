@@ -1,9 +1,9 @@
 angular.module("assembla", ['ui.bootstrap'])
-	.controller("assemblaController", ['$http', '$scope', 'assemblaService', 'assemblaOptionsService',
+	.controller("assemblaController", ['$http', '$scope', '$filter', 'assemblaService', 'assemblaOptionsService',
 		assemblaControllerFunction
 	]);
 
-function assemblaControllerFunction($http, $scope, as, aos) {
+function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 	var vm = this
 
 	vm._unassigned = '[unassigned]';
@@ -26,15 +26,14 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 	vm.refresh = refresh;
 	vm.abbreviate = abbreviate;
 	vm.toggle = toggle;
-	vm.pageby = pageby;
-	vm.pageChanged = pageChanged;
-	vm.repaginate = getTickets;
 	vm.getUserLogin = getUserLogin;
 	vm.isValidTicket = isValidTicket;
 	vm.parseDescription = parseDescription;
 	vm.addToFilter = addToFilter;
 	vm.filterTickets = filterTickets;
 	vm.sort = sort;
+	vm.createdSinceFilterChange = createdSinceFilterChange,
+	vm.getCount = getCount;
 	aos.setOnReadyHandler(refresh);
 
 	return vm;
@@ -66,6 +65,7 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 			if (valA>valB) return 1;
 		});
 	}
+	
 	function getUserLogin(id) {
 		if (!id || vm.users.length<1) return "";
 		return vm.users.reduce(function(login, user) {
@@ -74,9 +74,58 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 		},null);
 	}
 	
-	function pageChanged() {
-		console.log(vm.options.currentPage);
+	function getCount(ticketPropName, comp, value) {
+		var cnt = 0
+		vm.tickets.forEach(function(t) {
+			cnt += evalCompare(t, ticketPropName,comp,value) ? 1 : 0;
+		});
+		return cnt;
 	}
+	
+	function evalCompare(ticket, tPropName, comp, value) {
+		var tVal = ticket[tPropName];
+		if (isin(comp,['=','eq','==','EQ'])) return (tVal == value);
+		if (isin(comp,['>','gt','GT'])) return (tVal > value);
+		if (isin(comp,['>=','ge', 'GE','=>'])) return (tVal >= value);
+		if (isin(comp,['<=','le','LE','=<'])) return (tVal <= value);
+		if (isin(comp,['<','lt','LT'])) return (tVal < value);
+		return false;
+	}
+	function isin(val,arr,prop) {
+		
+		arr.forEach(function(a) {
+			var aVal = prop && a[prop] ? a[prop] : a;
+			if (aVal==val) return true;
+		});
+	}
+	function createdSinceFilterChange() {
+	// get all tickets since createdSince, if not already here
+		return;
+		
+		as.getActivity({
+			parms: {
+				from: $filter('date')(vm.createdSince,'yyyy-MM-dd'),
+				page: 1,
+				per_page: 50
+			}
+		}).success(function(data) {
+			data.forEach(function(act) {
+				if (act.object.toLowerCase()!=='ticket' && act.operation.toLowerCase()=='created') {
+					if (!isin(act.object_id,tickets,'id')) {
+						as.getTicket({
+							spaceId: vm.selectedSpace.id,
+							ticketId: act.object_id
+						}).success(function(data) {
+							if (isin(data.id,vm.tickets,'id')) return;
+							vm.tickets.push(data);
+							vm.updateTicketCount(data);
+						});
+					}
+				}
+			});
+		});
+	}
+	
 	function addToFilter(propName,id) {
 		if (!vm.options.filters) vm.options.filters={};
 		if (!vm.options.filters[propName]) vm.options.filters[propName]={};
@@ -101,6 +150,7 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 			val = val + val.trim() != '' ? val : vm._blank;
 			if (!ignoreCustomFields[prop] && !vm.options.filters[prop][val]) return false;
 		}
+		if (vm.createdSince && vm.createdSince > new Date(ticket.created_on)) return false;
 		return true;
 	}
 	
@@ -164,11 +214,6 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 		
 	}
 
-	function pageby(inc) {
-		vm.options.currentPage += inc;
-		getTickets();
-	}
-
 	function toggle(obj, prop) {
 		obj[prop] = !obj[prop];
 	}
@@ -189,16 +234,16 @@ function assemblaControllerFunction($http, $scope, as, aos) {
 		var delim = "_@&@_"; // delimiter
 		d=d.replace(/(?:^|[\r\f\n\v])T(?:ech|echincal)?\s?D(?:esc|escription)?\:/i, delim + "TD" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])(?:F?(?:riendly)?)?\s?D(?:esc(?:ription)?)?\:/i, delim + "FD" + delim);
-		d=d.replace(/(?:^|[\r\f\n\v])\D(?:esc(?:ription)?)?\:/i, delim + "D" + delim);
-		d=d.replace(/(?:^|[\r\f\n\v])\*D(?:esc(?:ription)?)?\*/i, delim + "D" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])L(?:oc(?:ation)?)?\:/i, delim + "L" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])\*L(?:oc(?:ation)?)?\*/i, delim + "L" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])T(?:est(?:ing|s)?)?(?:\s?I?(?:deas)?)?\:/i, delim + "T" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])\*T(?:est(?:ing|s)?)?(?:\s?I?(?:deas)?)?\*/i, delim + "T" + delim);
+		d=d.replace(/(?:^|[\r\f\n\v])R(?:eported)?(?:\s?B(?:y)?)?\:/i, delim + "RB" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])P(?:erm(?:issions)?)?\:/i, delim + "P" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])(?:A(?:uth(?:orization)?)?\s?)?(?:S(?:cope)?)?\:/i, delim + "P" + delim);
+		d=d.replace(/(?:^|[\r\f\n\v])\D(?:esc(?:ription)?)?\:/i, delim + "D" + delim);
+		d=d.replace(/(?:^|[\r\f\n\v])\*D(?:esc(?:ription)?)?\*/i, delim + "D" + delim);
 		d=d.replace(/(?:^|[\r\f\n\v])R(?:ole(?:s)?)?\:/i, delim + "P" + delim);
-		d=d.replace(/(?:^|[\r\f\n\v])R(?:eported)?(?:\s?B(?:y)?)?\:/i, delim + "RB" + delim);
 		var parts = d.split(delim);
 		if (parts[0].trim()=="") parts.shift();
 		if (!/^(?:TD|FD|T|L|RP|P|D)$/.test(parts[0])) parts.unshift('O');

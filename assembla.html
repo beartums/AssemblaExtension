@@ -119,6 +119,31 @@
 							</div>
 						</div>
 					</div>
+					<div class="row">
+						<div class="row">
+							<div class="col-md-12">
+								<span class="glyphicon" 
+														data-ng-class="{'glyphicon-collapse-down':vm.showCreatedSince,'glyphicon-expand':!vm.showCreatedSince}"
+														data-ng-click="vm.showCreatedSince = !vm.showCreatedSince">
+									<strong>Created Since</strong>
+								</span>
+							</div>
+						</div>
+						<div class="row" ng-show="vm.showCreatedSince">
+							<div class="col-md-12">
+								<span>
+									<p class="input-group">
+										<input type="date" class="form-control" ng-model="vm.createdSince" ng-change="vm.createdSinceFilterChange()"/>
+										<span class="input-group-btn">
+											<span class="input-group-btn label" data-ng-show="vm.createdSince">
+												{{vm.getCount('created_on','gt',vm.createdSince)}}
+											</span>
+										</span>
+									</p>
+								</span>
+							</div>
+						</div>
+					</div>
 				</div>
 				<div id="main" data-ng-class="{'col-md-10': vm.showTools, 'col-md-12': !vm.showTools}">
 					<div class="row" id="heading">
@@ -149,7 +174,10 @@
 							</div>
 						</div>
 						<div class="col-md-3">
-							ticket count: <span class="badge">{{vm.tickets.length}}</span>
+							ticket count: <span data-ng-if="filteredTickets.length!=vm.tickets.length">
+									<span class="badge">{{filteredTickets.length}}</span> of 
+								</span>
+								<span class="badge">{{vm.tickets.length}}</span>
 						</div>
 					</div>
 					<div class="row" id="ticketstable" >
@@ -166,7 +194,7 @@
 										<th></th>
 										<th></th>
 									</tr>
-									<tr data-ng-repeat-start="t in vm.tickets | filter : vm.filterTickets">
+									<tr data-ng-repeat-start="t in filteredTickets = (vm.tickets | filter : vm.filterTickets)">
 										<td data-ng-click="vm.toggle(t,'expanded')">
 											<span class="glyphicon" data-ng-class="{'glyphicon-minus':t.expanded, 'glyphicon-plus':!t.expanded}"></span>
 										</td>
