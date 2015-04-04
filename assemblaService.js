@@ -22,6 +22,7 @@ angular.module("assembla")
 			getCustomFields: getCustomFields,
 			getTicket: getTicket,
 			getActivity: getActivity,
+			updateTicket: updateTicket,
       init: init
     };
 		
@@ -69,6 +70,13 @@ angular.module("assembla")
       
       return getData(url,qObj);
     }
+		function updateTicket(qObj) {
+			var url = "https://api.assembla.com/spaces/" + qObj.spaceId +
+				"/tickets/" + qObj.ticketNumber;
+			var hObj = angular.copy(reqObj.headers);
+			hObj["Content-type"]="application/json";
+			return $http.put(url,{ticket:qObj.data},hObj);
+		}
 
 		function getData(url, qObj, callingProcedure) {
 			if (!qObj.parms) qObj.parms = {};

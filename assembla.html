@@ -200,7 +200,21 @@
 										</td>
 										<td>{{t.number}}</td>
 										<td title="{{t.summary}}">{{vm.abbreviate(t.summary,30,20)}}</td>
-										<td>{{t.status}}</td>
+										<td ng-mouseenter="statusIsButton=true" ng-mouseleave="statusIsButton=false">
+											<span ng-if="!statusIsButton">{{t.status}} &nbsp;</span>
+											<span class="dropdown" dropdown>
+												<a href class="label label-default dropdown-toggle" dropdown-toggle 
+													ng-if="statusIsButton">
+													{{t.status}}
+													<span class="caret"></span>
+												</a>
+												<ul class="dropdown-menu">
+													<li ng-repeat="stat in vm.statuses">
+														<a href ng-click="vm.updateStatus(t,stat)">{{stat.name}}</a>
+													</li>
+												</ul>
+											</span>
+										</td>
 										<td>{{t.created_on | date:'dd MMM yy'}}</td>
 										<td>{{vm.getUserLogin(t.assigned_to_id)}}</td>
 										<td>

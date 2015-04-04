@@ -15,6 +15,8 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 	vm.tickets = [];
 	vm.users = [];
 	vm.tags = [];
+	vm.statuses = [],
+	vm.customFields = [];
 	vm.showUsers = false;
 	vm.ticketCount = {
 		assignedTo: {},
@@ -32,8 +34,10 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 	vm.addToFilter = addToFilter;
 	vm.filterTickets = filterTickets;
 	vm.sort = sort;
-	vm.createdSinceFilterChange = createdSinceFilterChange,
+	vm.createdSinceFilterChange = createdSinceFilterChange;
 	vm.getCount = getCount;
+	vm.updateStatus = updateStatus;
+	
 	aos.setOnReadyHandler(refresh);
 
 	return vm;
@@ -261,6 +265,21 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 		return (ticket.parsed.T && ticket.parsed.L && (ticket.parsed.TD || ticket.parsed.FD || ticket.parsed.D));
 	}
 
+	function updateStatus(t,status) {
+		var uData = {
+			status: status.name
+		}
+		as.updateTicket({
+			spaceId: vm.selectedSpace.id,
+			ticketNumber: t.number,
+			data: uData
+		}).success(function(data) {
+			t.status = status.name;
+		}).error(function(err) {
+			console.dir(err)
+		});
+	}
+	
 	function selectMilestone() {
 		getTickets();
 	}
