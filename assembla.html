@@ -43,20 +43,20 @@
 									<a class="list-group-item" ng-repeat="u in vm.users" 
 											ng-if="u.role.role!='watcher' || u.role.status==2"
 											ng-class="{active:vm.options.filters.user[u.id]}"
-											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assignedTo[u.id] || vm.ticketCount.assignedTo[u.id]==0)"
+											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assigned_to_id[u.id] || vm.ticketCount.assigned_to_id[u.id]==0)"
 											title="{{u.name}} ({{u.role.role}})"
 											ng-click="vm.addToFilter('user',u.id)">
-											<span class="badge" ng-if="vm.ticketCount.assignedTo[u.id] && vm.ticketCount.assignedTo[u.id]>0">
-												{{!vm.ticketCount.assignedTo[u.id] ? 0 : vm.ticketCount.assignedTo[u.id]}}
+											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[u.id] && vm.ticketCount.assigned_to_id[u.id]>0">
+												{{!vm.ticketCount.assigned_to_id[u.id] ? 0 : vm.ticketCount.assigned_to_id[u.id]}}
 											</span>
 											{{u.login}}
 									</a>
 									<a class="list-group-item" 
 											ng-class="{active:vm.options.filters.user[vm._unassigned]}"
-											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assignedTo[vm._unassigned] || vm.ticketCount.assignedTo[vm._unassigned]==0)"
+											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assigned_to_id[vm._unassigned] || vm.ticketCount.assigned_to_id[vm._unassigned]==0)"
 											ng-click="vm.addToFilter('user',vm._unassigned)">
-											<span class="badge" ng-if="vm.ticketCount.assignedTo[vm._unassigned] && vm.ticketCount.assignedTo[vm._unassigned]>0">
-												{{!vm.ticketCount.assignedTo[vm._unassigned] ? 0 : vm.ticketCount.assignedTo[vm._unassigned]}}
+											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[vm._unassigned] && vm.ticketCount.assigned_to_id[vm._unassigned]>0">
+												{{!vm.ticketCount.assigned_to_id[vm._unassigned] ? 0 : vm.ticketCount.assigned_to_id[vm._unassigned]}}
 											</span>
 											{{vm._unassigned}}
 									</a>
@@ -210,7 +210,7 @@
 												</a>
 												<ul class="dropdown-menu">
 													<li ng-repeat="stat in vm.statuses">
-														<a href ng-click="vm.updateStatus(t,stat)">{{stat.name}}</a>
+														<a href ng-click="vm.updateTicket(t,'status',stat.name)">{{stat.name}}</a>
 													</li>
 												</ul>
 											</span>

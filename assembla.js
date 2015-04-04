@@ -36,7 +36,7 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 	vm.sort = sort;
 	vm.createdSinceFilterChange = createdSinceFilterChange;
 	vm.getCount = getCount;
-	vm.updateStatus = updateStatus;
+	vm.updateTicket = updateTicket;
 	
 	aos.setOnReadyHandler(refresh);
 
@@ -265,17 +265,19 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 		return (ticket.parsed.T && ticket.parsed.L && (ticket.parsed.TD || ticket.parsed.FD || ticket.parsed.D));
 	}
 
-	function updateStatus(t,status) {
-		var uData = {
-			status: status.name
-		}
+	function updateTicket(ticket, propName, propValue) {
+		var uData = {};
+		uData[propName]=propValue;
+		
 		as.updateTicket({
 			spaceId: vm.selectedSpace.id,
-			ticketNumber: t.number,
+			ticketNumber: ticket.number,
 			data: uData
 		}).success(function(data) {
-			t.status = status.name;
+			updateCount(propName,ticket[propName],propValue)
+			ticket[propName] = propValue;
 		}).error(function(err) {
+			
 			console.dir(err)
 		});
 	}
@@ -309,35 +311,41 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 			}
 		});
 	}
-	
+	function updateCount(propName,oldValue,newValue,unassignedValue,countObj) {
+		countObj = countObj || vm.ticketCount;
+		unassignedValue = unassignedValue || vm._blank;
+		
+		if (oldValue != '@addonly@') {
+			oldValue = (!oldValue || (oldValue && oldValue.trim()=="")) ? unassignedValue : oldValue;
+			if (countObj[propName] && countObj[propName][oldValue]) countObj[propName][oldValue]--;
+		}
+		
+		if (newValue != '@deleteonly@') {
+			newValue = (!newValue || (newValue && newValue.trim()=="")) ? unassignedValue : newValue;
+			if (!countObj[propName]) countObj[propName] = {};
+			if (!countObj[propName][newValue]) countObj[propName][newValue] = 0;
+			countObj[propName][newValue]++;
+		}
+	}
 	function updateTicketCount(ticket,countObj) {
 		countObj = countObj || vm.ticketCount;
-		var at = ticket.assigned_to_id;
-		at = at && at.trim() != "" ? at : vm._unassigned;
-		if (!countObj.assignedTo) countObj.assignedTo = {};
-		if (!countObj.assignedTo[at]) countObj.assignedTo[at]=0;
-		countObj.assignedTo[at] = countObj.assignedTo[at] + 1;
+		var prop = 'assigned_to_id'
+		updateCount(prop,'@addonly@',ticket[prop],vm._unassigned);
 		
 		var tags = ticket.tags;
 		if (!countObj.tag) countObj.tag = {};
 		if (tags && angular.isArray(tags)) {
 			tags.forEach(function(tag) {
-				if (!countObj.tag[tag]) countObj.tag[tag]=0;
-				countObj.tag[tag]++;
+						updateCount('tag','@addonly@',tag);
 			});
 		}
 		
-		var s = ticket.status;
-		if (!countObj.status) countObj.status = {};
-		if (!countObj.status[s]) countObj.status[s]=0;
-		countObj.status[s]++;
+		prop='status';
+		updateCount(prop,'@addonly@',ticket[prop]);
 		
 		var cfs = ticket.custom_fields;
 		for (var prop in cfs) {
-			if (!countObj[prop]) countObj[prop] = {};
-			var cfVal = cfs[prop] && cfs[prop].trim() != "" ? cfs[prop] : vm._blank;
-			if (!countObj[prop][cfVal]) countObj[prop][cfVal]=0;
-			countObj[prop][cfVal]++;
+			updateCount(prop,'@addonly@',cfs[prop]);
 		}
 		
 	}
