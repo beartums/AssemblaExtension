@@ -1,9 +1,10 @@
-angular.module("assembla", ['ui.bootstrap'])
-	.controller("assemblaController", ['$http', '$scope', '$filter', 'assemblaService', 'assemblaOptionsService',
+angular.module("assembla", ['ui.bootstrap','directiveModule'])
+	.controller("assemblaController", 
+			['$http', '$scope', '$filter', 'assemblaService', 'assemblaOptionsService', 'ColumnFactory',
 		assemblaControllerFunction
 	]);
 
-function assemblaControllerFunction($http, $scope, $filter, as, aos) {
+function assemblaControllerFunction($http, $scope, $filter, as, aos, cf) {
 	var vm = this
 
 	vm._unassigned = '[unassigned]';
@@ -37,6 +38,7 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 	vm.createdSinceFilterChange = createdSinceFilterChange;
 	vm.getCount = getCount;
 	vm.updateTicket = updateTicket;
+	vm.cancel = cancel;
 	
 	aos.setOnReadyHandler(refresh);
 
@@ -47,8 +49,77 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 			secret: vm.options.secret,
 			key: vm.options.key
 		});
+		cf.addColumn('id','Id');
+		cf.addColumn('number','Number');
+		cf.addColumn('summary','Summary',{func: abbreviate});
+		cf.addColumn('priority','Priority',{lookup:{'1': 'Highest','2':'High','3':'Normal','4':'Low','5':'Lowest'}});
+		cf.addColumn('completed_date','Completed',{'filter': 'date','parm1':'yyyy-MM-dd'} );
+		cf.addColumn('component_id','Component',{func:getFromList,parms:['@val',vm.components,'id','name']});
+		cf.addColumn('created_on','Created',{'filter': 'date','parm1':'yyyy-MM-dd'});
+		cf.addColumn('milestone_id','Milestone',{func:getFromList,parms:['@val',vm.milestones,'id','title']});
+		cf.addColumn('state','State',{lookup:{'0':'Open','1':'Closed'}});
+		cf.addColumn('status','Status');
+		cf.addColumn('assigned_to_id','Assigned To',{func:getFromList,parms:['@val',vm.users,'id','login']});
+		cf.addColumn('reporter_id','Reported By',{func:getFromList,parms:['@val',vm.users,'id','login']});
+		cf.addColumn('updated_at','Updated',{'filter': 'date','parm1':'yyyy-MM-dd'});
+		cf.addColumn('space_id','Space',{func:getFromList,parms:['@val',vm.spaces,'id','name']});
+		cf.addColumn('custom_fields.Due Date','Due Date',{'filter': 'date','parm1':'yyyy-MM-dd'});
+		cf.addColumn('custom_fields.QA','Bug Type');
+		cf.addColumn('custom_fields.QA Assigned Person','QA Tester');
+		cf.addColumn('custom_fields.Due Date','Due Date',{'filter': 'date','parm1':'yyyy-MM-dd'});
+		cf.addColumn('hierarchy_type','Type',{lookup:{'0':'Ticket','1':'Subtask','2':'Story','3':'Epic'}});
+		cf.addColumn('@doc_segs','Segments',{func:getParsedProps,parms:['@ticket']});
+		cf.addColumn('@is_valid','Segments',{func:isValidTicket,parms:['@ticket'],returnType:'html',
+													boolVals: {trueVal: "<span class='glyphicon glyphicon-ok text-success'></span>",
+																		falseVal: "<span class='glyphicon glyphicon-remove text-danger'></span>"}});
+		
+		if (!aos.options.visibleColumns) {
+			var col = cf.unhideColumn('number');
+			col = cf.unhideColumn('summary',col);
+			col = cf.unhideColumn('status',col);
+			col = cf.unhideColumn('Created',col);
+			col = cf.unhideColumn('Assigned To',col);
+		}
 	}
 	
+	function cancel(e,formField) {
+		if (e.keyCode==27) {
+			formField.$rollbackViewValue();
+			return false;
+		} 
+		if (e.keyCode=='13') return false;
+		return true
+	}
+	
+	function getFromList(findText,list,keyProp,valueProp) {
+		return list.reduce(function(value,item) {
+			if (value) return value;
+			if (item && item[keyProp] && item[keyProp]==findText) return item[valueProp];
+			return null;
+		},null);
+	}
+	
+	function joinObjProps(obj,delim) {
+		delim = delim || ', ';
+		var joinString = "";
+		for (var prop in obj) {
+			joinString += (joinString=="" ? "" : delim) + prop;
+		}
+		return joinString;
+	}
+	
+	function joinObjVals(objs,propName,delim) {
+		delim = delim || ', ';
+		return objs.reduce(function(string,obj) {
+			if (!obj[propName]) return string;
+			return string + (string=="" ? "" : delim) + obj[propName];
+		},"");
+	}
+	
+	function getParsedProps(ticket) {
+		if (!ticket.parsed) parseDescription(ticket);
+		return joinObjProps(ticket.parsed);
+	}
 	function sort(sortField) {
 		if (sortField == vm.options.currentSortColumn) {
 			vm.options.currentSortAscending = !vm.options.currentSortAscending;
@@ -265,7 +336,7 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 		return (ticket.parsed.T && ticket.parsed.L && (ticket.parsed.TD || ticket.parsed.FD || ticket.parsed.D));
 	}
 
-	function updateTicket(ticket, propName, propValue) {
+	function updateTicket(ticket, propName, propValue, oldValue) {
 		var uData = {};
 		uData[propName]=propValue;
 		
@@ -277,8 +348,8 @@ function assemblaControllerFunction($http, $scope, $filter, as, aos) {
 			updateCount(propName,ticket[propName],propValue)
 			ticket[propName] = propValue;
 		}).error(function(err) {
-			
-			console.dir(err)
+			console.dir(err);
+			ticket[propName] = oldValue;
 		});
 	}
 	

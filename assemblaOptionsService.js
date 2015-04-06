@@ -1,5 +1,5 @@
 angular.module("assembla")
-  .factory("assemblaOptionsService", function($rootScope) {
+  .factory("assemblaOptionsService", ['$rootScope', 'ColumnFactory', function($rootScope, cf) {
 
     var aos = {
       options: {
@@ -10,7 +10,8 @@ angular.module("assembla")
         currentPage: null,
         currentMilestone: null,
         currentSortOrder: null,
-        currentSortColumn: null
+        currentSortColumn: null,
+				visibleColumns: cf.visibleColumns
       },
       status: {
         msg: '',
@@ -22,6 +23,8 @@ angular.module("assembla")
 
 		var readyHandler = null;
 		var isReady = false;
+		
+		var _delim = "@_@"
 		
     restoreOptions();
 
@@ -37,6 +40,9 @@ angular.module("assembla")
 		}
 
     function saveOptions() {
+			var vcNames = aos.options.visibleColumns.reduce(function(string,col) {
+				return string + (string == "" ? "" : _delim) + col.propertyName;
+			},"");
       chrome.storage.sync.set({
         ticketsPerPage: aos.options.ticketsPerPage,
         currentPage: aos.options.currentPage,
@@ -45,7 +51,8 @@ angular.module("assembla")
         currentSortColumn: aos.options.currentSortColumn,
         secret: aos.options.secret,
         key: aos.options.key,
-        statusTimeout: aos.options.statusTimeout
+        statusTimeout: aos.options.statusTimeout,
+				visibleColumnNameString: vcNames
       }, function() {
         // Update status to let user know options were saved.
         aos.status.msg = 'Options saved.';
@@ -71,7 +78,8 @@ angular.module("assembla")
         currentPage: 1,
         currentMilestone: null,
         currentSortAscending: true,
-        currentSortColumn: null
+        currentSortColumn: null,
+				visibleColumnNameString: ''
       }, function(items) {
         aos.options.ticketsPerPage = items.ticketsPerPage;
         aos.options.currentPage = items.currentPage;
@@ -81,10 +89,12 @@ angular.module("assembla")
         aos.options.secret = items.secret;
         aos.options.key = items.key;
         aos.options.statusTimeout = items.statusTimeout;
+				aos.options.visibleColumnNameString = items.visibleColumnNameString;
+				aos.options.visibleColumnNames = aos.options.visibleColumnNameString.split(_delim);
         $rootScope.$apply();
 				if (readyHandler && !isReady) readyHandler();
 				isReady = true;
       });
     }
 
-  });
+  }]);
