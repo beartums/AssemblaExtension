@@ -1,5 +1,40 @@
 <html>
-<body>
-  <script src="popup.js"></script>
+<head>
+	<link href="css/bootstrap.css" rel="stylesheet" media="screen">
+	<link href="css/custom.css" rel="stylesheet" media="screen">
+</head>
+<body ng-app="assembla" style="width:800px">
+	<div ng-controller="popupController as pu">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<table class="table table-hover">
+						<tr>
+							<th>Author</th>
+							<th>Date</th>
+							<th>Message</th>
+						</tr>
+						<tr ng-repeat="m in pu.bgPage.userMentions" ng-click="pu.gotoUrl(m.link)">
+							<td><small>{{m.author_id | authorInitials: pu.bgPage.users}}</small></td>
+							<td><small>{{m.created_at  | date: 'yy-MM-dd hh:mm'}}</small></td>
+							<td style="width:530px"><small>{{m.message}}</small></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="js/jquery-2.0.3.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/angular.js" charset="utf-8"></script>
+	<script src="js/localforage.js" charset="utf-8"></script>
+	<script src="js/angular-localForage.js" charset="utf-8"></script>
+	<script src="js/ui-bootstrap-tpls-0.12.1.min.js" charset="utf-8"></script>
+	<script src="ngDirectiveModule.js" charset="utf-8"></script>
+	<script src="assembla.js" charset="utf-8"></script>
+	<script src="columnFactory.js" charset="utf-8"></script>
+	<script src="assemblaService.js" charset="utf-8"></script>
+	<script src="assemblaOptionsService.js" charset="utf-8"></script>
+	<script src="popup.js"></script>
 </body>
 </html>

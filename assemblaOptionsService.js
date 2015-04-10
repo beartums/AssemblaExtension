@@ -1,23 +1,18 @@
 angular.module("assembla")
-  .factory("assemblaOptionsService", ['$rootScope', 'ColumnFactory', function($rootScope, cf) {
+  .factory("assemblaOptionsService", ['$rootScope', '$localForage', '$filter', function($rootScope, $lf, $filter) {
 
     var aos = {
-      options: {
-        key: null,
-        secret: null,
-        statusTimeout: null,
-        ticketsPerPage: null,
-        currentPage: null,
-        currentMilestone: null,
-        currentSortOrder: null,
-        currentSortColumn: null,
-				visibleColumns: cf.visibleColumns
-      },
+      options: {},
+			data: {
+				tickets: [],
+				lastCompletedUpdateDate: '2006-01-01',
+				mostRecentUpdateDate: null
+			},
       status: {
         msg: '',
         mode: ''
       },
-      onchange: onchange,
+      saveOptions: saveOptions,
 			setOnReadyHandler: setOnReadyHandler
     }
 
@@ -26,6 +21,30 @@ angular.module("assembla")
 		
 		var _delim = "@_@"
 		
+		/**
+		$lf.bind(aos, {
+			key: 'options',
+			scopeKey: 'options',
+			defaultValue: {
+				secret: '',
+				key: '',
+				statusTimeout: 1500,
+				itemsPerPage: 10,
+				currentSortAscending: true,
+				currentSortColumn: null,
+				userLogin: 'eric.griffith',
+				purgeOpenTickets: false,
+				purgeBeforeDate: '2012-01-01',
+				loadAllTickets: false,
+				mentionWatchInterval: '600000',
+				markMentionAsReadWhenClicked: true
+			}
+		}).then(function() {
+			console.dir(aos.options);
+			if (readyHandler) readyHandler();
+			isReady = true
+		});
+		**/
     restoreOptions();
 
     return aos;
@@ -39,12 +58,10 @@ angular.module("assembla")
 			if (isReady) handler();
 		}
 
-    function saveOptions() {
-			var vcNames = aos.options.visibleColumns.reduce(function(string,col) {
-				return string + (string == "" ? "" : _delim) + col.propertyName;
-			},"");
+    
+		function saveOptions() {
       chrome.storage.sync.set({
-        ticketsPerPage: aos.options.ticketsPerPage,
+        itemsPerPage: aos.options.itemsPerPage,
         currentPage: aos.options.currentPage,
         currentMilestone: aos.options.currentMilestone,
         currentSortAscending: aos.options.currentSortAscending,
@@ -52,7 +69,11 @@ angular.module("assembla")
         secret: aos.options.secret,
         key: aos.options.key,
         statusTimeout: aos.options.statusTimeout,
-				visibleColumnNameString: vcNames
+				userLogin: aos.options.userLogin,
+				purgeBeforeDate: $filter('date')(aos.options.purgeBeforeDate,'yyyy-MM-dd'),
+				loadAllTickets: aos.options.loadAllTickets,
+				purgeOpenTickets: aos.options.purgeOpenTickets,
+				mentionWatchInterval: aos.options.mentionWatchInterval
       }, function() {
         // Update status to let user know options were saved.
         aos.status.msg = 'Options saved.';
@@ -74,14 +95,19 @@ angular.module("assembla")
         secret: '',
         key: '',
         statusTimeout: 1500,
-        ticketsPerPage: 10,
+        itemsPerPage: 10,
         currentPage: 1,
         currentMilestone: null,
         currentSortAscending: true,
         currentSortColumn: null,
-				visibleColumnNameString: ''
+				visibleColumnNameString: '',
+				userLogin: 'eric.griffith',
+				purgeOpenTickets: false,
+				purgeBeforeDate: '2012-01-01',
+				loadAllTickets: false,
+				mentionWatchInterval: '600000'
       }, function(items) {
-        aos.options.ticketsPerPage = items.ticketsPerPage;
+        aos.options.itemsPerPage = items.itemsPerPage;
         aos.options.currentPage = items.currentPage;
         aos.options.currentMilestone = items.currentMilestone;
         aos.options.currentSortAscending = items.currentSortAscending;
@@ -90,11 +116,16 @@ angular.module("assembla")
         aos.options.key = items.key;
         aos.options.statusTimeout = items.statusTimeout;
 				aos.options.visibleColumnNameString = items.visibleColumnNameString;
-				aos.options.visibleColumnNames = aos.options.visibleColumnNameString.split(_delim);
+				aos.options.userLogin = items.userLogin;
+				aos.options.mentionWatchInterval = items.mentionWatchInterval;
+        aos.options.purgeBeforeDate = items.purgeBeforeDate;
+        aos.options.loadAllTickets = items.loadAllTickets;
+        aos.options.purgeOpenTickets = items.purgeOpenTickets;
         $rootScope.$apply();
 				if (readyHandler && !isReady) readyHandler();
 				isReady = true;
       });
     }
+
 
   }]);

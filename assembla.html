@@ -16,174 +16,184 @@
   <body data-ng-controller="assemblaController as vm">
     <div class="container">
 			<div class="row">
-				<div class="col-md-2" id="sidebar" ng-if="vm.showTools" 
+				<div class="col-md-3" id="sidebar" ng-if="vm.showTools" 
 					style="background-color:WhiteSmoke; padding:20px; min-height:100%;">
 					<div class="row" ng-hide="vm.users.length==0" id="usersDiv">
 						<div>
 							<h3>Tools</h3>
 						</div>
-						<div class="row" id="userButtons">
-							<div class="col-md-12">
-								<div class="">
-									<span class="glyphicon" title="Show/hide users"
-															data-ng-class="{'glyphicon-collapse-down':vm.showUsers,'glyphicon-expand':!vm.showUsers}"
-															data-ng-click="vm.showUsers = !vm.showUsers">
-															<strong>Users</strong>
-									</span>
-									<span class="btn btn-sm glyphicon" title="Show/hide inactive users"
+						<accordion close-others="false" style="padding:2px">
+						<accordion-group id="milestonesGroup" is-open="milestoneIsOpen">
+							<accordion-heading>
+								<strong>Milestones</strong>
+								<i class="glyphicon pull-right" title="Show/hide completed milestones"
+															data-ng-show="milestoneIsOpen"
+															data-ng-class="{'glyphicon-resize-small':vm.showCompletedMilestones,'glyphicon-resize-full':!vm.showCompletedMilestones}"
+															prevent-default
+															data-ng-click="vm.showCompletedMilestones=!vm.showCompletedMilestones;
+																						vm.toggleTicketsInCompletedMilestones(vm.showCompletedMilestones)">
+								</i>
+							</accordion-heading>
+								<ul class="list-group">
+									<a class="list-group-item" ng-repeat="m in vm.milestones" 
+											ng-class="{active:vm.options.filters.milestone[m.id]}"
+											ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
+											ng-click="vm.addToFilter('milestone',m.id)">
+											<span class="badge" ng-if="vm.ticketCount.milestone_id[m.id] && vm.ticketCount.milestone_id[m.id].length>0">
+												{{!vm.ticketCount.milestone_id[m.id].length ? 0 : vm.ticketCount.milestone_id[m.id].length}}
+											</span>
+											{{m.title}}
+									</a>
+									<a class="list-group-item" 
+											ng-class="{active:vm.options.filters.milestone[vm._unassigned]}"
+											ng-click="vm.addToFilter('milestone',vm._unassigned)">
+											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[vm._unassigned] && vm.ticketCount.assigned_to_id[vm._unassigned].length>0">
+												{{!vm.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.ticketCount.assigned_to_id[vm._unassigned].length}}
+											</span>
+											{{vm._unassigned}}
+									</a>
+								</ul>
+						</accordion-group>
+						<accordion-group is-open="usersIsOpen">
+							<accordion-heading>
+								<strong>Users</strong>
+								<i class="glyphicon pull-right" title="Show/hide inactive users"
+															prevent-default
+															data-ng-show="usersIsOpen"
 															data-ng-class="{'glyphicon-resize-small':vm.showInactiveUsers,'glyphicon-resize-full':!vm.showInactiveUsers}"
-															data-ng-click="vm.showInactiveUsers = !vm.showInactiveUsers"
-															data-ng-hide="!vm.showUsers">
-									</span>
-								</div>
-							</div>
-						</div>
-						<div class="row" ng-show="vm.showUsers">
-							<div class="col-md-12">
+															data-ng-click="vm.showInactiveUsers = !vm.showInactiveUsers">
+								</i>
+							</accordion-heading>
 								<ul class="list-group">
 									<a class="list-group-item" ng-repeat="u in vm.users" 
 											ng-if="u.role.role!='watcher' || u.role.status==2"
 											ng-class="{active:vm.options.filters.user[u.id]}"
-											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assigned_to_id[u.id] || vm.ticketCount.assigned_to_id[u.id]==0)"
+											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assigned_to_id[u.id] || vm.ticketCount.assigned_to_id[u.id].length==0)"
 											title="{{u.name}} ({{u.role.role}})"
 											ng-click="vm.addToFilter('user',u.id)">
-											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[u.id] && vm.ticketCount.assigned_to_id[u.id]>0">
-												{{!vm.ticketCount.assigned_to_id[u.id] ? 0 : vm.ticketCount.assigned_to_id[u.id]}}
+											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[u.id] && vm.ticketCount.assigned_to_id[u.id].length>0">
+												{{!vm.ticketCount.assigned_to_id[u.id].length ? 0 : vm.ticketCount.assigned_to_id[u.id].length}}
 											</span>
 											{{u.login}}
 									</a>
 									<a class="list-group-item" 
 											ng-class="{active:vm.options.filters.user[vm._unassigned]}"
-											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assigned_to_id[vm._unassigned] || vm.ticketCount.assigned_to_id[vm._unassigned]==0)"
+											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assigned_to_id[vm._unassigned] || vm.ticketCount.assigned_to_id[vm._unassigned].length==0)"
 											ng-click="vm.addToFilter('user',vm._unassigned)">
-											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[vm._unassigned] && vm.ticketCount.assigned_to_id[vm._unassigned]>0">
-												{{!vm.ticketCount.assigned_to_id[vm._unassigned] ? 0 : vm.ticketCount.assigned_to_id[vm._unassigned]}}
+											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[vm._unassigned] && vm.ticketCount.assigned_to_id[vm._unassigned].length>0">
+												{{!vm.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.ticketCount.assigned_to_id[vm._unassigned].length}}
 											</span>
 											{{vm._unassigned}}
 									</a>
 								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="row" ng-hide="vm.statuses.length==0" id="statusesDiv">
-						<div class="row">
-							<div class="col-md-12">
-									<span class="glyphicon" 
-															data-ng-class="{'glyphicon-collapse-down':vm.showStatuses,'glyphicon-expand':!vm.showStatuses}"
-															data-ng-click="vm.showStatuses = !vm.showStatuses">
-										<strong>Statuses</strong>
-									</span>
-									<span class="btn btn-sm glyphicon" title="Show/hide inactive statuses"
-										data-ng-class="{'glyphicon-resize-small':vm.showInactiveStatuses,'glyphicon-resize-full':!vm.showInactiveStatuses}"
-										data-ng-hide="!vm.showStatuses"
-										data-ng-click="vm.showInactiveStatuses = !vm.showInactiveStatuses">
-									</span>
+						</accordion-group>
+						<accordion-group is-open="statusesIsOpen">
+							<accordion-heading>
+								<strong>Statuses</strong>
+								<i class="pull-right glyphicon" title="Show/hide inactive statuses"
+									prevent-default
+									data-ng-show="statusesIsOpen"
+									data-ng-class="{'glyphicon-resize-small':vm.showInactiveStatuses,'glyphicon-resize-full':!vm.showInactiveStatuses}"
+									data-ng-click="vm.showInactiveStatuses = !vm.showInactiveStatuses;">
+								</i>
+							</accordion-heading>
 								
-							</div>
-						</div>
-						<div class="row" ng-show="vm.showStatuses">
-							<div class="col-md-12">
-								<ul class="list-group">
-									<a ng-repeat="s in vm.statuses" class="list-group-item"
-										ng-hide="!vm.showInactiveStatuses && (!vm.ticketCount.status[s.name] || vm.ticketCount.status[s.name]==0)"
-										ng-class="{active:vm.options.filters.status[s.name]}"
-										ng-click="vm.addToFilter('status',s.name)">
-										<span class="badge" ng-if="vm.ticketCount.status[s.name] && vm.ticketCount.status[s.name]>0">
-												{{!vm.ticketCount.status[s.name] ? 0 : vm.ticketCount.status[s.name]}}
-										</span>
-										{{s.name}}
-									</a>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="row" ng-repeat="cf in vm.customFields" id="customFieldsDiv">
-						<div class="row">
-							<div class="col-md-12">
-								<span class="glyphicon" 
-														data-ng-class="{'glyphicon-collapse-down':vm.vm['show'+cf.title+'s'],'glyphicon-expand':!vm.vm['show'+cf.title+'s']}"
-														data-ng-click="vm['show'+cf.title+'s'] = !vm['show'+cf.title+'s']">
-									<strong>{{cf.title}}</strong>
+							<ul class="list-group">
+								<a ng-repeat="s in vm.statuses" class="list-group-item"
+									ng-hide="!vm.showInactiveStatuses && (!vm.ticketCount.status[s.name] || vm.ticketCount.status[s.name].length==0)"
+									ng-class="{active:vm.options.filters.status[s.name]}"
+									ng-click="vm.addToFilter('status',s.name)">
+									<span class="badge" ng-if="vm.ticketCount.status[s.name] && vm.ticketCount.status[s.name].length>0">
+											{{!vm.ticketCount.status[s.name].length ? 0 : vm.ticketCount.status[s.name].length}}
+									</span>
+									{{s.name}}
+								</a>
+							</ul>
+						</accordion-group>
+						<accordion-group ng-repeat="cf in vm.customFields">
+							<accordion-heading>
+								<strong>{{cf.title}}</strong>
+							</accordion-heading>
+							<ul class="list-group">
+								<a ng-repeat="(v,list) in vm.ticketCount.custom_fields[cf.title]"  class="list-group-item"
+										ng-class="{active:vm.options.filters.custom_fields[cf.title][v]}"
+										ng-click="vm.addToFilter('custom_fields.' + cf.title,v)">
+									<span class="badge">{{list.length}}</span>
+									{{v}}
+								</a>
+							</ul>
+						</accordion-group>
+						<accordion-group>
+							<accordion-heading>
+								<strong>Created Since</strong>
+							</accordion-heading>
+							<p class="input-group">
+								<input type="date" class="form-control" ng-model="vm.createdSince" ng-change="vm.createdSinceFilterChange()"/>
+								<span class="input-group-btn">
+									<span class="input-group-btn label" data-ng-show="vm.createdSince">
+										{{vm.getCount('created_on','gt',vm.createdSince)}}
+									</span>
 								</span>
-							</div>
-						</div>
-						<div class="row" ng-show="vm['show'+cf.title+'s']">
-							<div class="col-md-12">
-								<ul class="list-group">
-									<a ng-repeat="(v,cnt) in vm.ticketCount[cf.title]"  class="list-group-item"
-											ng-class="{active:vm.options.filters[cf.title][v]}"
-											ng-click="vm.addToFilter(cf.title,v)">
-										<span class="badge">{{cnt}}</span>
-										{{v}}
-									</a>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="row">
-							<div class="col-md-12">
-								<span class="glyphicon" 
-														data-ng-class="{'glyphicon-collapse-down':vm.showCreatedSince,'glyphicon-expand':!vm.showCreatedSince}"
-														data-ng-click="vm.showCreatedSince = !vm.showCreatedSince">
-									<strong>Created Since</strong>
-								</span>
-							</div>
-						</div>
-						<div class="row" ng-show="vm.showCreatedSince">
-							<div class="col-md-12">
-								<span>
-									<p class="input-group">
-										<input type="date" class="form-control" ng-model="vm.createdSince" ng-change="vm.createdSinceFilterChange()"/>
-										<span class="input-group-btn">
-											<span class="input-group-btn label" data-ng-show="vm.createdSince">
-												{{vm.getCount('created_on','gt',vm.createdSince)}}
-											</span>
-										</span>
-									</p>
-								</span>
-							</div>
-						</div>
-					</div>
+							</p>
+						</accordion-group>
+					</accordion>
 				</div>
-				<div id="main" data-ng-class="{'col-md-10': vm.showTools, 'col-md-12': !vm.showTools}">
+			</div>
+				<div id="main" data-ng-class="{'col-md-9': vm.showTools, 'col-md-12': !vm.showTools}">
 					<div class="row" id="heading">
 						<div class="col-md-12">
 							<h1>{{vm.selectedSpace.name}}</h1>
 						</div>
 					</div>
 					<div class="row" id="tools">
-						<div class="col-md-1 col-sm-2" id="showToolsButton">
+						<div class="col-md-1" id="showToolsButton">
 							<a href="#" class="btn btn-default" 
 									data-ng-class="{active:vm.showTools}" 
 									data-ng-click="vm.showTools=!vm.showTools">
 								<span class="glyphicon" 
-											data-ng-class="{'glyphicon-arrow-right': !vm.showTools, 'glyphicon-arrow-left':vm.showTools}"></span>
+											data-ng-class="{'glyphicon-arrow-right': !vm.showTools, 
+																			'glyphicon-arrow-left':vm.showTools}">
+								</span>
 							</a>
 						</div>
-						<div class="col-md-3 col-sm-5" id="milestoneSelector">
-							<div class="input-group">
-								<span class="input-group-btn">
-									<a href="#" class="btn btn-default " data-ng-click="vm.refresh()">
-										<span class="glyphicon glyphicon-refresh"></span>
-									</a>
-								</span>
-								<select class="form-control"
-												ng-change="vm.selectMilestone()"
-												ng-model="vm.options.currentMilestone"
-												data-ng-options="milestone.id as milestone.title for milestone in vm.milestones"> </select>
+						<div class="col-md-3" id="ticketFilter">
+							<div class='input-group'>
+								<span class='input-group-addon'><span class="glyphicon glyphicon-search"></span></span>
+								<input type='text' class="form-control" ng-model="vm.filterText" ng-model-options="{debounce:1000}" placeholder="-filter text-" />
+								<span class='input-group-addon'><span class='glyphicon glyphicon-remove'></span></span>
 							</div>
 						</div>
-						<div class="col-md-3">
-							ticket count: <span data-ng-if="filteredTickets.length!=vm.tickets.length">
-									<span class="badge">{{filteredTickets.length}}</span> of 
-								</span>
-								<span class="badge">{{vm.tickets.length}}</span>
+						<div class="col-md-2" id="currentPage">
+							<div class="input-group">
+								<span class='input-group-addon'>#p</span>
+								<input type='number' class="form-control" ng-model-options="{debounce:1000}" ng-model='vm.page' ng-init="vm.page=1" />
+							</div>
+						</div>
+						<div class="col-md-2" id="perPage">
+							<div class="input-group">
+								<input type='number' class="form-control" ng-model-options="{debounce:1000}" ng-change="vm.optionChange()" ng-model="vm.options.itemsPerPage" />
+								<span class='input-group-addon'>i/p</span>
+							</div>
+						</div>
+						<div class="col-md-3" id="ticketCount">
+							ticket count: 
+							<span data-ng-if="filteredTickets.length!=vm.data.tickets.length">
+								<span class="badge">{{filteredTickets.length}}</span> 
+								of 
+							</span>
+							<span class="badge">{{vm.data.tickets.length}}</span>
+						</div>
+					</div>
+					<div class='row' id='paginationRow'>
+						<div class="col-md-12 text-center" id="pagination">
+							<pagination total-items="filteredTickets.length" ng-model="vm.page" max-size='10'
+													boundary-links="true" items-per-page="vm.options.itemsPerPage" rotate="true">
+							</pagination>
 						</div>
 					</div>
 					<div class="row" id="ticketstable" >
 						<div class="col-md-12">
-							<table class="table" ng-hide="vm.tickets.length==0">
+							<table class="table" ng-hide="vm.data.tickets.length==0">
 								<tbody>
 									<tr>
 										<th></th>
@@ -195,7 +205,10 @@
 										<th></th>
 										<th></th>
 									</tr>
-									<tr data-ng-repeat-start="t in filteredTickets = (vm.tickets | filter : vm.filterTickets)">
+									<tr data-ng-repeat-start="t in filteredTickets = (
+											vm.data.tickets	| filter: vm.filterTickets) 
+																			| startFrom: (vm.page-1) * vm.options.itemsPerPage
+																			| limitTo: vm.options.itemsPerPage">
 										<td data-ng-click="vm.toggle(t,'expanded')">
 											<span class="glyphicon" data-ng-class="{'glyphicon-minus':t.expanded, 'glyphicon-plus':!t.expanded}"></span>
 										</td>
@@ -248,10 +261,11 @@
 		<script src="js/jquery-2.0.3.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
     <script src="js/angular.js" charset="utf-8"></script>
+    <script src="js/localforage.js" charset="utf-8"></script>
+    <script src="js/angular-localForage.js" charset="utf-8"></script>
     <script src="js/ui-bootstrap-tpls-0.12.1.min.js" charset="utf-8"></script>
     <script src="ngDirectiveModule.js" charset="utf-8"></script>
     <script src="assembla.js" charset="utf-8"></script>
-    <script src="columnFactory.js" charset="utf-8"></script>
     <script src="assemblaService.js" charset="utf-8"></script>
     <script src="assemblaOptionsService.js" charset="utf-8"></script>
 

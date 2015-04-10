@@ -23,6 +23,9 @@ angular.module("assembla")
 			getTicket: getTicket,
 			getActivity: getActivity,
 			updateTicket: updateTicket,
+			getUpdatedTickets: getUpdatedTickets,
+			getUserMentions: getUserMentions,
+			findFirstUpdatedSince: findFirstUpdatedSince,
       init: init
     };
 		
@@ -70,6 +73,12 @@ angular.module("assembla")
       
       return getData(url,qObj);
     }
+    function getUpdatedTickets(qObj) {
+      var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
+        "/tickets.json";
+      return getData(url,qObj);
+			
+    }
 		function updateTicket(qObj) {
 			var url = "https://api.assembla.com/spaces/" + qObj.spaceId +
 				"/tickets/" + qObj.ticketNumber;
@@ -91,13 +100,16 @@ angular.module("assembla")
 			
 			if (qObj.doNotPage) return p;
 			return p.success(function(data) {
+				if (!qObj.returnedData) qObj.returnedData=[];
+				if (angular.isArray(data)) {
+					data.forEach(function(item) {qObj.returnedData.push(item); });
+				}
+				
 				if (qObj.dataHandler) {
-					qObj.dataHandler(data);
+					if (qObj.dataHandler(data)) return qObj.returnedData;
 				} else if (qObj.dataObject) {
 					data.forEach(function(item) {qObj.dataObject.push(item); });
 				} 
-				if (!qObj.returnedData) qObj.returnedData=[];
-				data.forEach(function(item) {qObj.returnedData.push(item); });
 
 				if (data.length < qObj.parms.per_page) return qObj.returnedData;
 				qObj.parms.page++;
@@ -123,20 +135,46 @@ angular.module("assembla")
       var url = "https://api.assembla.com/v1/spaces.json"
       return $http.get(url,reqObj)
     }
+		
+		function getUserMentions(qObj) {
+      var url = "https://api.assembla.com/v1/user/mentions.json"
+      return getData(url,qObj)
+    }
 
     function getMilestones(qObj) {
-      var url = "https://www.assembla.com/v1/spaces/" + qObj.spaceId +
+      var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
           "/milestones" + (qObj.type ? "/" + qObj.type : "") + ".json";
 			if (qObj.parms) url += makeUrlParms(qObj.parms);
       return $http.get(url,reqObj);
     }
 		
     function getStatuses(qObj) {
-      var url = "https://www.assembla.com/v1/spaces/" + qObj.spaceId +
+      var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
           "/tickets/statuses.json";
 			if (qObj.parms) url += makeUrlParms(qObj.parms);
       return $http.get(url,reqObj);
     }
+				
+		function findFirstUpdatedSince(spaceId,date,lastInterval,lastRowRead,lastTicket) {
+			var url = "https://api.assempla.com/spaces/" + spaceId + "/tickets.json";
+			url += "?report=0&sort_by=updated_at&sort_order=asc&per_page=1";
+			lastRowRead = lastRowRead || 1;
+			if (Math.abs(lastInterval)==1) return lastRowRead;
+			if (!date) return 1;
+			var nextRow = 0;
+			var nextInterval = Math.abs(Math.ceil(lastInterval/2));
+			if ((!lastTicket && lastRowRead && lastowRead>0) || (lastTicket && new Date(lastTicket.updated_at) > date)) {
+					nextInterval = -nextInterval;
+			}
+			nextRow = lastRow + nextInterval;
+			url += "&page=" + nextRow;
+			return http.get(url,reqObj).success(function(data) {
+				var ticket=data;
+				return findFirstUpdatedSince(spaceId,data,nextInterval,nextRow,ticket);
+			}).error(function(error) {
+				return findFirstUpdatedSince(spaceId,data,nextInterval,nextRow);
+			})
+		}
 		
 		function makeUrlParms(parmObj) {
 			var parms = [];
