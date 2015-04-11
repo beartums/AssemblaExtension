@@ -1,6 +1,39 @@
 angular.module("assembla")
 	.factory('ColumnFactory',['$filter', function ($filter) {
 	
+	function cfInit() {
+			cf.addColumn('id','Id');
+		cf.addColumn('number','Number');
+		cf.addColumn('summary','Summary',{func: abbreviate});
+		cf.addColumn('priority','Priority',{lookup:{'1': 'Highest','2':'High','3':'Normal','4':'Low','5':'Lowest'}});
+		cf.addColumn('completed_date','Completed',{'filter': 'date','parm1':'yyyy-MM-dd'} );
+		cf.addColumn('component_id','Component',{func:getFromList,parms:['@val',vm.components,'id','name']});
+		cf.addColumn('created_on','Created',{'filter': 'date','parm1':'yyyy-MM-dd'});
+		cf.addColumn('milestone_id','Milestone',{func:getFromList,parms:['@val',vm.milestones,'id','title']});
+		cf.addColumn('state','State',{lookup:{'0':'Open','1':'Closed'}});
+		cf.addColumn('status','Status');
+		cf.addColumn('assigned_to_id','Assigned To',{func:getFromList,parms:['@val',vm.users,'id','login']});
+		cf.addColumn('reporter_id','Reported By',{func:getFromList,parms:['@val',vm.users,'id','login']});
+		cf.addColumn('updated_at','Updated',{'filter': 'date','parm1':'yyyy-MM-dd'});
+		cf.addColumn('space_id','Space',{func:getFromList,parms:['@val',vm.spaces,'id','name']});
+		cf.addColumn('custom_fields.Due Date','Due Date',{'filter': 'date','parm1':'yyyy-MM-dd'});
+		cf.addColumn('custom_fields.QA','Bug Type');
+		cf.addColumn('custom_fields.QA Assigned Person','QA Tester');
+		cf.addColumn('custom_fields.Due Date','Due Date',{'filter': 'date','parm1':'yyyy-MM-dd'});
+		cf.addColumn('hierarchy_type','Type',{lookup:{'0':'Ticket','1':'Subtask','2':'Story','3':'Epic'}});
+		cf.addColumn('@doc_segs','Segments',{func:getParsedProps,parms:['@ticket']});
+		cf.addColumn('@is_valid','Segments',{func:isValidTicket,parms:['@ticket'],returnType:'html',
+													boolVals: {trueVal: "<span class='glyphicon glyphicon-ok text-success'></span>",
+																		falseVal: "<span class='glyphicon glyphicon-remove text-danger'></span>"}});
+		
+		if (!aos.options.visibleColumns) {
+			var col = cf.unhideColumn('number');
+			col = cf.unhideColumn('summary',col);
+			col = cf.unhideColumn('status',col);
+			col = cf.unhideColumn('Created',col);
+			col = cf.unhideColumn('Assigned To',col);
+		}
+	}
 	function Column(propertyName, heading, transformObj) {
 		this.heading = heading;
 		this.propertyName = propertyName;

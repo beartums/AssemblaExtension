@@ -17,8 +17,8 @@ directiveModule.directive("clickToEdit", function ($timeout) {
         template: editorTemplate,
         scope: {
             value: "=clickToEdit",
-            changeCallback: "=onValueChange",
-						changeParms: "=valueChangeParms"
+            changeCallback: "@onValueChange",
+						changeParms: "@valueChangeParms"
         },
         controller: function ($scope,$timeout) {
             $scope.view = {
@@ -49,13 +49,16 @@ directiveModule.directive("clickToEdit", function ($timeout) {
 							if (!$scope.changeParms) parms = ['@newVal','@oldVal'];
 							else if (angular.isArray($scope.changeParms)) parms = $scope.changeParms;
 							else parms=[$scope.changeParms];
-							parms.forEach(function(parm) {
-								parms[parms.indexOf(parm)] = parm=="@oldVal" ? $scope.value : parm;
-								parms[parms.indexOf(parm)] = parm=='@newVal' ? $scope.view.editableValue : parm;
+							parms.forEach(function(parm,idx) {
+								if (parms[idx]=='@oldVal') {
+									parms[idx] = $scope.value;
+								} else if (parms[idx]=='@newVal') {
+									parms[idx] = $scope.view.editableValue;
+								}
 							}); 
 							
 							if ($scope.value != $scope.view.editableValue) {
-									var oldValue = $scope.value;
+									var oldValue = $idxscope.value;
 									$scope.value = $scope.view.editableValue;
 									if ($scope.changeCallback) {
 											$scope.changeCallback(parms[0],parms[1],parms[2],parms[3],parms[4],parms[5],parms[6],parms[7]);
