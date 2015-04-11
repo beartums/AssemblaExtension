@@ -1,4 +1,4 @@
-angular.module("assembla", ['ui.bootstrap','directiveModule','LocalForageModule'])
+angular.module("assembla", ['ui.bootstrap','directiveModule','LocalForageModule','pageslide-directive'])
 
 	.config(['$localForageProvider', function($localForageProvider){
     $localForageProvider.config({
@@ -17,6 +17,7 @@ angular.module("assembla", ['ui.bootstrap','directiveModule','LocalForageModule'
 			return input;
 		}
   })
+			
 	// Needed since stoppropagation was causing a page reload
 	.directive('preventDefault', function() {
 			return function(scope, element, attrs) {
@@ -74,6 +75,8 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	vm.abbreviate = abbreviate;
 	vm.toggle = toggle;
 	vm.getUserLogin = getUserLogin;
+	vm.getInitials = getInitials;
+	vm.getFromList = getFromList;
 	vm.isValidTicket = isValidTicket;
 	vm.parseDescription = parseDescription;
 	vm.addToFilter = addToFilter;
@@ -146,6 +149,29 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		},"");
 	}
 	
+	// get initials of author or mention from the userid
+	function getUserInitials(user) {
+		var init = '', inits = []
+		if (!user) return '--';
+		var name = (user.name ? user.name 
+								: (user.email ? user.email.substring(0,user.email.indexOf('@')-1)
+									: user.login));
+		inits = name.replace("."," ").split(" ");
+		if (inits.length==1) return inits[0].substring(0,3);
+		return inits.reduce(function(init,name) {
+			init += name[0];
+			return init;
+		},"");
+	}
+	
+	function getInitials(string) {
+		if (!string || !string.length || string.length<5) return string;
+		words = string.split(' ');
+		return words.reduce(function(inits,word) {
+			return inits+word.substring(0,1);
+		}, '');
+	}
+	
 	function getParsedProps(ticket) {
 		if (!ticket.parsed) parseDescription(ticket);
 		return joinObjProps(ticket.parsed);
@@ -159,6 +185,18 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 			return val[prop];
 		},obj);
 	}
+	function setValueByPropPath(propPath,obj,val) {
+		var props = propPath.split('.');
+		props.forEach(function(prop, idx) {
+			if (!obj) return
+			if (idx==props.length-1) {
+				obj[prop] = val;
+			} else {
+				obj = obj[prop];
+			}
+		});
+	}
+	
 	
 	// TODO: Tickets found during Assembla Update: check hidden AND live tickets for matches
 	function toggleTicketsInCompletedMilestones(showCompletedMilestones) {
@@ -197,8 +235,14 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		vm.sortClasses[sortField] = 'glyphicon glyphicon-chevron-' + (vm.options.currentSortAscending ? 'up' : 'down');
 
 		vm.data.tickets.sort(function(a,b) {
-			var valA = sortField=="user_login" ? getUserLogin(a.assigned_to_id) : a[sortField];
-			var valB = sortField=="user_login" ? getUserLogin(b.assigned_to_id) : b[sortField];
+			var valA, valB
+			if (sortField == "milestone") {
+				valA = getFromList(a.milestone_id,vm.milestones,'id','initials');
+				valB = getFromList(b.milestone_id,vm.milestones,'id','initials');
+			} else {
+				valA = getValueByPropPath(sortField,a,"");
+				valB = getValueByPropPath(sortField,b,"");
+			}
 			if (!vm.options.currentSortAscending) { var h = valA; valA=valB; valB = h; }
 			
 			if (valA<valB) return -1;
@@ -345,10 +389,9 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 			// get upcoming milestones
 			as.getMilestones({spaceId: vm.selectedSpace.id,per_page:100}).success(function(data) {
 				vm.milestones = data;
-				var found = vm.milestones.some(function(milestone) { 
-					return milestone.id == vm.options.currentMilestone;
+				vm.milestones.forEach(function(milestone, idx) {
+					vm.milestones[idx].initials = getInitials(milestone.title);
 				});
-				if (found) selectMilestone();
 				// get past milestones
 				as.getMilestones({spaceId: vm.selectedSpace.id, 
 												type: 'completed',
@@ -358,7 +401,10 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 						return milestone.id == vm.options.currentMilestone;
 					});
 					//if (found) selectMilestone();
-					data.forEach(function(item) { vm.milestones.unshift(item)});
+					data.forEach(function(item) { 
+						item.initials = getInitials(item.title);
+						vm.milestones.unshift(item);
+					});
 				});
 			});
 			var qObj = {spaceId: vm.selectedSpace.id, parms: {per_page: 100}};
@@ -370,6 +416,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 					as.getUser(qObj).success(function(data) {
 						user = data;
 						user.role = role;
+						user.initials = getUserInitials(user);
 						vm.users.push(user);
 					});
 				});
@@ -437,7 +484,8 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 
 	function updateTicket(ticket, propName, propValue, oldValue) {
 		var uData = {};
-		uData[propName]=propValue;
+		initPropPath(uData,propName,propValue);
+		//uData[propName]=propValue;
 		
 		as.updateTicket({
 			spaceId: vm.selectedSpace.id,
@@ -445,10 +493,10 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 			data: uData
 		}).success(function(data) {
 			updateCount(propName,ticket,propValue,oldValue)
-			ticket[propName] = propValue;
+			setValueByPropPath(propName,ticket,propValue);
 		}).error(function(err) {
 			console.dir(err);
-			ticket[propName] = oldValue;
+			setValueByPropPath(propName,ticket,oldValue);
 		});
 	}
 	
@@ -473,7 +521,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		})
 		// ticket counts need to be updated only for tickets not going into the hidden tickets
 		if (oldTicket && ticketArray===vm.data.tickets) updateTicketCount(oldTicket,vm.ticketCount,true)
-		if (!oldTicket || oldticket && ticketArray===vm.data.tickets) updateTicketCount(ticket,vm.ticketCount);
+		if (!oldTicket || oldTicket && ticketArray===vm.data.tickets) updateTicketCount(ticket,vm.ticketCount);
 		if (index>-1) {
 			ticketArray[index] = ticket;
 		} else {
@@ -565,9 +613,10 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		oldValue = !oldValue || oldValue.trim ? oldValue : oldValue.toString();
 		
 		if (oldValue && oldValue != vm._ignore) {
-			if (countObj[propName] && countObj[propName][oldValue]) {
-				var idx = countObj[propName][oldValue].indexOf(ticket);
-				if (idx>-1) countObj[propName][oldValue].splice(idx,1);
+			var countProp = getValueByPropPath(propName,countObj);
+			if (countProp && countProp[oldValue]) {
+				var idx = countProp[oldValue].indexOf(ticket);
+				if (idx>-1) countProp[oldValue].splice(idx,1);
 			}
 		}
 		

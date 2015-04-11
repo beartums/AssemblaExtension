@@ -36,7 +36,7 @@ angular.module("assembla")
 
 	.controller("popupController", ['assemblaService','assemblaOptionsService','$window',popupControllerFunction]);
 	
-	function popupControllerFunction($timeout,as,aos,$lf,$window) {
+	function popupControllerFunction(as,aos,$window) {
 		
 		var pu = this;
 		pu.bgPage = chrome.extension.getBackgroundPage();

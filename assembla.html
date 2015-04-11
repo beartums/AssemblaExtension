@@ -11,7 +11,7 @@
 
 	<!-- Cascading Style Sheets -->
 	<link href="css/bootstrap.css" rel="stylesheet" media="screen">
-	<link href="css/custom.css" rel="stylesheet" media="screen">
+	<link href="assembla.css" rel="stylesheet" media="screen">
   </head>
   <body data-ng-controller="assemblaController as vm">
     <div class="container">
@@ -201,9 +201,12 @@
 										<th>Summary</th>
 										<th ng-click="vm.sort('status')">Status <span class="text-muted" ng-class="vm.sortClasses['status']"</th>
 										<th ng-click="vm.sort('created_on')">Created <span class="text-muted" ng-class="vm.sortClasses['created_on']"</th>
-										<th ng-click="vm.sort('user_login')">Assigned to <span class="text-muted" ng-class="vm.sortClasses['user_login']"</th>
+										<th ng-click="vm.sort('initials')">Dev <span class="text-muted" ng-class="vm.sortClasses['initials']"</th>
+										<th ng-click="vm.sort('milestone')">Milestone <span class="text-muted" ng-class="vm.sortClasses['milestone']"</th>
+										<th ng-click="vm.sort('custom_fields.QA Assigned Person')">QA By <span class="text-muted" ng-class="vm.sortClasses['custom_fields.QA Assigned Person']"</th>
+										<th ng-click="vm.sort('custom_fields.QA')">QA <span class="text-muted" ng-class="vm.sortClasses['custom_fields.QA']"</th>
 										<th></th>
-										<th></th>
+										<th>Desc?</th>
 									</tr>
 									<tr data-ng-repeat-start="t in filteredTickets = (
 											vm.data.tickets	| filter: vm.filterTickets) 
@@ -214,23 +217,98 @@
 										</td>
 										<td>{{t.number}}</td>
 										<td title="{{t.summary}}">{{vm.abbreviate(t.summary,30,20)}}</td>
-										<td ng-mouseenter="statusIsButton=true" ng-mouseleave="statusIsButton=false">
-											<span ng-if="!statusIsButton">{{t.status}} &nbsp;</span>
+										<td>
 											<span class="dropdown" dropdown>
-												<a href class="label label-default dropdown-toggle" dropdown-toggle 
-													ng-if="statusIsButton">
+												<span class="hover-btn dropdown-toggle" dropdown-toggle >
 													{{t.status}}
 													<span class="caret"></span>
-												</a>
+												</span>
 												<ul class="dropdown-menu">
 													<li ng-repeat="stat in vm.statuses">
-														<a href ng-click="vm.updateTicket(t,'status',stat.name,t.status)">{{stat.name}}</a>
+														<a href ng-click="vm.updateTicket(t,'status',stat.name,t.status)"
+																		ng-class="{selected: stat.name==t.status}">
+															{{stat.name}}
+														</a>
 													</li>
 												</ul>
 											</span>
 										</td>
 										<td>{{t.created_on | date:'dd MMM yy'}}</td>
-										<td>{{vm.getUserLogin(t.assigned_to_id)}}</td>
+										<td title="{{vm.getFromList(t.assigned_to_id,vm.users,'id','login')}}">
+											<span dropdown class="dropdown">
+												<span dropdown-toggle class="dropdown-toggle hover-btn">
+													{{vm.getFromList(t.assigned_to_id,vm.users,'id','initials') || '--'}}
+													<span class="caret"></span>
+												</span>
+												<ul class="dropdown-menu">
+													<li ng-repeat="u in vm.users 
+																| filter : {role:{role:'!watcher',status:'2'}}
+																| orderBy: '(name || login || email)'">
+														<a href ng-click="vm.updateTicket(t,'assigned_to_id',u.id,t.assigned_to_id)"
+																		ng-class="{selected: u.id==t.assigned_to_id}">
+														{{u.name || u.login || u.email}}
+														</a>
+													</li>
+													<li>
+														<a href ng-click="vm.updateTicket(t,'assigned_to_id','',t.assigned_to_id)"
+																		ng-class="{selected: !t.assigned_to_id || t.assigned_to_id==''}">
+														{{vm._unassigned}}
+														</a>
+													</li>
+												</ul>
+											</span>
+										</td>
+										<td title="{{vm.getFromList(t.milestone_id,vm.milestones,'id','title')}}">
+											<span dropdown class="dropdown">
+												<span class="hover-btn dropdown-toggle" dropdown-toggle>
+													{{vm.getFromList(t.milestone_id,vm.milestones,'id','initials') || '--'}}
+													<span class="caret"></span>
+												</span>
+												<ul class="dropdown-menu">
+													<li ng-repeat="m in vm.milestones | filter : {is_completed:false}">
+														<a href ng-click="vm.updateTicket(t,'milestone_id',m.id,t.milestone_id)"
+															ng-class="{selected: t.milestone_id && m.id==t.milestone_id}">
+															{{m.title}}
+														</a>
+													</li>
+													<li>
+														<a href ng-click="vm.updateTicket(t,'milestone_id','',t.milestone_id)"
+															ng-class="{selected: !t.milestone_id || ''==t.milestone_id}">
+															{{vm._unassigned}}
+														</a>
+													</li>
+												</ul>
+											</span>
+										</td>
+										<td title="{{t.custom_fields['QA Assigned Person']}}">
+											<span dropdown class="dropdown">
+												<span class="hover-btn dropdown-toggle" dropdown-toggle>
+													{{vm.getInitials(t.custom_fields['QA Assigned Person'] || '--')}}
+													<span class="caret"></span>
+												</span>
+												<ul class="dropdown-menu">
+													<li ng-repeat="(n,list) in vm.ticketCount.custom_fields['QA Assigned Person']">
+														<a href ng-click="vm.updateTicket(t,'custom_fields.QA Assigned Person',
+																															n,t.custom_fields['QA Assigned Person'])"
+																		ng-classs="{selected: n == t.custom_fields['QA Assigned Person']}">
+															{{n}}
+														</a>
+													</li>
+													<li>
+														<div class="input-group input-group-sm">
+															<input type="text" class="form-control" prevent-default ng-model="vm.qapName">
+															<span class="input-group-btn">
+																<span class="btn btn-default btn-sm" ng-click="vm.updateTicket(t,'custom_fields.QA Assigned Person',
+																															vm.qapName,t.custom_fields['QA Assigned Person'])">
+																	<span class="text-success glyphicon glyphicon-ok"></span>
+																</span>
+															</span>
+														</div>
+													</li>
+												</ul>
+											</span>
+										</td>
+										<td>{{t.custom_fields['QA']}}</td>
 										<td>
 											<span  data-ng-repeat="(k,v) in t.parsed">
 												{{k}}
@@ -261,6 +339,7 @@
 		<script src="js/jquery-2.0.3.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
     <script src="js/angular.js" charset="utf-8"></script>
+    <script src="js/angular-pageslide-directive.min.js" charset="utf-8"></script>
     <script src="js/localforage.js" charset="utf-8"></script>
     <script src="js/angular-localForage.js" charset="utf-8"></script>
     <script src="js/ui-bootstrap-tpls-0.12.1.min.js" charset="utf-8"></script>
