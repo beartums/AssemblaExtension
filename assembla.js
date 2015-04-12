@@ -54,8 +54,9 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	vm._ignore = '@_@ignore@_@';
 	vm.options = aos.options
 	vm.options.filters = {};
-	vm.options.filters = {};
 	vm.milestones = [];
+	vm.epics = [];
+	vm.associations = [];
 	vm.selectedSpace = null
 	vm.selectedMilestone = null;
 	vm.users = [];
@@ -64,11 +65,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	vm.statuses = [],
 	vm.customFields = [];
 	vm.showUsers = false;;
-	vm.ticketCount = {
-		assignedTo: {},
-		tag: {},
-		status: {}
-	}
+	vm.data.ticketCount = {}
 
 	vm.selectMilestone = selectMilestone;
 	vm.refresh = refresh;
@@ -85,6 +82,8 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	vm.createdSinceFilterChange = createdSinceFilterChange;
 	vm.getCount = getCount;
 	vm.updateTicket = updateTicket;
+	vm.getUpdatedTickets=getUpdatedTickets;
+	vm.resetCounts = resetCounts;
 	vm.cancel = cancel;
 	vm.optionChange = aos.onchange;
 	vm.cancelClick = cancelClick;
@@ -200,10 +199,10 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	
 	// TODO: Tickets found during Assembla Update: check hidden AND live tickets for matches
 	function toggleTicketsInCompletedMilestones(showCompletedMilestones) {
-		if (showCompletedMilestones) {
+		if (showCompletedMilestones) {  // If we are going to be showing tickets in completed milestones
 			vm.data.hiddenTickets.forEach(function(ticket) {
 				vm.data.tickets.push(ticket);
-				updateTicketCount(ticket,vm.ticketCount); // update category indexes for incoming tickets
+				updateTicketCount(ticket,vm.data.ticketCount); // update category indexes for incoming tickets
 				updateTicketCount(ticket,vm.data.hiddenTicketCount,true); // likewise remove them from the hidden indexes
 			});
 			vm.data.hiddenTickets = [];
@@ -215,7 +214,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 					var ticket = vm.data.tickets[i];
 					vm.data.hiddenTickets.push(ticket);
 					deletedIdxs.push(i);
-					updateTicketCount(ticket,vm.ticketCount,true); // remove from live indexes
+					updateTicketCount(ticket,vm.data.ticketCount,true); // remove from live indexes
 					updateTicketCount(ticket,vm.data.hiddenTicketCount); // add to hidden indexes
 				}
 			}
@@ -368,20 +367,15 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 				key: 'vm.data',
 				defaultValue: {
 					tickets: [],
+					ticketCount: {},
 					hiddenTickets: [],
 					hiddenTicketCount: {},
+					epics: {},
 					lastCompletedUpdateDate: '2006-01-01',
 					mostRecentUpdateDate: null
 				}
 			}).then(function() {
-				vm.data.tickets.forEach(function(ticket) {
-					updateTicketCount(ticket);
-				});
-				vm.data.mostRecentUpdateDate = new Date();
-				lastUpdated = vm.data.lastCompletedUpdateDate ? 
-											new Date(vm.data.lastCompletedUpdateDate) : 
-											new Date('2006-01-01')
-				getUpdatedTickets(lastUpdated,vm.data.tickets).success(function(data) {
+				getUpdatedTickets(vm.data.lastCompletedUpdateDate).success(function(data) {
 					vm.data.lastCompletedUpdateDate = new Date();
 					vm.data.mostRecentUpdateDate = null;
 				});
@@ -505,7 +499,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	}
 	// determine whether the new ticket is an updated ticket and respond accordingly
 	function addOrUpdateTicket(ticket) {
-		//HACK: Direct references to the two global arrays because I'm lazu and it is easiest
+		//HACK: Direct references to the two global arrays because I'm lazy and it is easiest
 		var oldTicket = null, index = -1, ticketArray
 		// look in both collections of tickets to see if it needs to be update or simply saved as new
 		[vm.data.tickets,vm.data.hiddenTickets].some(function(tickets) {
@@ -519,20 +513,44 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 				}
 			});
 		})
-		// ticket counts need to be updated only for tickets not going into the hidden tickets
-		if (oldTicket && ticketArray===vm.data.tickets) updateTicketCount(oldTicket,vm.ticketCount,true)
-		if (!oldTicket || oldTicket && ticketArray===vm.data.tickets) updateTicketCount(ticket,vm.ticketCount);
-		if (index>-1) {
-			ticketArray[index] = ticket;
+		
+		if (oldTicket) {
+			var udpateHidden = !vm.showCompletedMilestones 
+													&& getValueByPropPath(oldTicket.milestone_id,vm.milestones,'id','is_completed');
+			if (updateHidden) { // remove from counts
+				updateTicketCount(oldTicket,vm.data.hiddenTicketCount,true);
+				vm.data.hiddenTickets.splice(index,1);
+			} else {
+				updateTicketCount(oldTicket,vm.data.ticketCount,true);
+				vm.data.tickets.splice(index,1);
+			}
+		}
+
+		var updateHidden = !vm.showCompletedMilestones 
+												&& getValueByPropPath(ticket.milestone_id,vm.milestones,'id','is_completed');
+		if (updateHidden) {
+			vm.data.hiddenTickets.push(ticket);
+			updateTicketCount(ticket,vm.data.hiddenTicketCount);
 		} else {
-		// if it's new, ALWAYS put it into visible tickets (unhide & then hid will move it to the hidden tickets if that's where it should be
-			tickets = ticketArray || vm.data.tickets
-			tickets.push(ticket);
+			vm.data.tickets.push(ticket);
+			updateTicketCount(ticket,vm.data.ticketCount);
 		}
 	}
 	
-	function getUpdatedTickets(lastUpdatedDate,tickets) {
-
+	function resetCounts(tickets, ticketCount) {
+		//vm.data.ticketCount={};
+		tickets = tickets || vm.data.tickets;
+		ticketCount = ticketCount || vm.data.ticketCount;
+		for (var key in ticketCount) {
+			delete ticketCount[key];
+		}
+		tickets.forEach(function(ticket) {
+			updateTicketCount(ticket,ticketCount);
+		});
+	}
+	
+	function getUpdatedTickets(lastUpdatedDate) {
+		lastUpdatedDate = lastUpdatedDate || new Date('2006-01-01')
 		vm. ticketsDownloading = true;
 		return as.getUpdatedTickets({
 			spaceId: vm.selectedSpace.id,
@@ -558,38 +576,11 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 				vm.data.ticketsDownloading = false;
 			}
 		}).success(function(AllDownloaded) {
-			return {date:new Date()};
+			vm.data.lastCompletedUpdateDate = new Date();
 		});
 	}
 	
-	
-	function getTickets() {
-		aos.onchange(); // save the values
-		vm.data.tickets=[];
-		vm.ticketCount = {};
-		vm.options.filters = {};
-		vm. ticketsDownloading = true;
-		as.getTickets({
-			spaceId: vm.selectedSpace.id,
-			milestoneId: vm.options.currentMilestone,
-			parms: {
-				per_page: vm.options.ticketsPerPage,
-				page: vm.options.currentPage,
-				ticket_status: 'all'
-			},
-			dataHandler: function(data) {
-				data.forEach(function(item) {
-					vm.data.tickets.push(item);
-					updateTicketCount(item)
-				});
-				return false // DO NOT cancel the download
-			},
-			completionHandler: function(pageCount) {
-				vm.data.ticketsDownloading = false;
-			}
-		});
-	}
-	// initialize an object path for properties that don't exist. 
+		// initialize an object path for properties that don't exist. 
 	// DO NOT overwrite the target if it already exists
 	// return the property being initialized (or found, if already initialized
 	function initPropPath(obj,propPath,dflt) {
@@ -607,10 +598,13 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	}
 	// Add or remove items from the ticketCount object.  Categorizing tickets for filters
 	function updateCount(propName,ticket,newValue,oldValue,unassignedValue,countObj) {
-		countObj = countObj || vm.ticketCount;
+		countObj = countObj || vm.data.ticketCount;
 		unassignedValue = unassignedValue || vm._unassigned;
 		newValue = !newValue || newValue.trim ? newValue : newValue.toString();
 		oldValue = !oldValue || oldValue.trim ? oldValue : oldValue.toString();
+		
+		newValue = !newValue || newValue.trim()=="" ? unassignedValue : newValue;
+		oldValue = !oldValue || oldValue.trim()=="" ? unassignedValue : oldValue;
 		
 		if (oldValue && oldValue != vm._ignore) {
 			var countProp = getValueByPropPath(propName,countObj);
@@ -627,7 +621,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		}
 	}
 	function updateTicketCount(ticket,countObj,isRemoval) {
-		countObj = countObj || vm.ticketCount;
+		countObj = countObj || vm.data.ticketCount;
 		
 		
 		var prop = 'assigned_to_id'
@@ -658,6 +652,17 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 								vm._blank,countObj);
 			}
 		}
+		/**
+		if (ticket.hierarchy_type=='3') { // if this is an epic
+			if (!vm.data.epics[ticket.id]) vm.data.epics[ticket.id] = {}
+			var t = vm.data.epics[ticket.id];
+			t.title = ticket.title;
+			t.number = ticket.number;
+			t.id = ticket.id
+		}
+		**/
+			
+		
 	}
 
 }

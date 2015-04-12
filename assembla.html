@@ -39,16 +39,16 @@
 											ng-class="{active:vm.options.filters.milestone[m.id]}"
 											ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
 											ng-click="vm.addToFilter('milestone',m.id)">
-											<span class="badge" ng-if="vm.ticketCount.milestone_id[m.id] && vm.ticketCount.milestone_id[m.id].length>0">
-												{{!vm.ticketCount.milestone_id[m.id].length ? 0 : vm.ticketCount.milestone_id[m.id].length}}
+											<span class="badge" ng-if="vm.data.ticketCount.milestone_id[m.id] && vm.data.ticketCount.milestone_id[m.id].length>0">
+												{{!vm.data.ticketCount.milestone_id[m.id].length ? 0 : vm.data.ticketCount.milestone_id[m.id].length}}
 											</span>
 											{{m.title}}
 									</a>
 									<a class="list-group-item" 
 											ng-class="{active:vm.options.filters.milestone[vm._unassigned]}"
 											ng-click="vm.addToFilter('milestone',vm._unassigned)">
-											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[vm._unassigned] && vm.ticketCount.assigned_to_id[vm._unassigned].length>0">
-												{{!vm.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.ticketCount.assigned_to_id[vm._unassigned].length}}
+											<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[vm._unassigned] && vm.data.ticketCount.assigned_to_id[vm._unassigned].length>0">
+												{{!vm.data.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.data.ticketCount.assigned_to_id[vm._unassigned].length}}
 											</span>
 											{{vm._unassigned}}
 									</a>
@@ -68,20 +68,20 @@
 									<a class="list-group-item" ng-repeat="u in vm.users" 
 											ng-if="u.role.role!='watcher' || u.role.status==2"
 											ng-class="{active:vm.options.filters.user[u.id]}"
-											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assigned_to_id[u.id] || vm.ticketCount.assigned_to_id[u.id].length==0)"
+											ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[u.id] || vm.data.ticketCount.assigned_to_id[u.id].length==0)"
 											title="{{u.name}} ({{u.role.role}})"
 											ng-click="vm.addToFilter('user',u.id)">
-											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[u.id] && vm.ticketCount.assigned_to_id[u.id].length>0">
-												{{!vm.ticketCount.assigned_to_id[u.id].length ? 0 : vm.ticketCount.assigned_to_id[u.id].length}}
+											<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[u.id] && vm.data.ticketCount.assigned_to_id[u.id].length>0">
+												{{!vm.data.ticketCount.assigned_to_id[u.id].length ? 0 : vm.data.ticketCount.assigned_to_id[u.id].length}}
 											</span>
 											{{u.login}}
 									</a>
 									<a class="list-group-item" 
 											ng-class="{active:vm.options.filters.user[vm._unassigned]}"
-											ng-hide="!vm.showInactiveUsers && (!vm.ticketCount.assigned_to_id[vm._unassigned] || vm.ticketCount.assigned_to_id[vm._unassigned].length==0)"
+											ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[vm._unassigned] || vm.data.ticketCount.assigned_to_id[vm._unassigned].length==0)"
 											ng-click="vm.addToFilter('user',vm._unassigned)">
-											<span class="badge" ng-if="vm.ticketCount.assigned_to_id[vm._unassigned] && vm.ticketCount.assigned_to_id[vm._unassigned].length>0">
-												{{!vm.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.ticketCount.assigned_to_id[vm._unassigned].length}}
+											<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[vm._unassigned] && vm.data.ticketCount.assigned_to_id[vm._unassigned].length>0">
+												{{!vm.data.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.data.ticketCount.assigned_to_id[vm._unassigned].length}}
 											</span>
 											{{vm._unassigned}}
 									</a>
@@ -100,11 +100,11 @@
 								
 							<ul class="list-group">
 								<a ng-repeat="s in vm.statuses" class="list-group-item"
-									ng-hide="!vm.showInactiveStatuses && (!vm.ticketCount.status[s.name] || vm.ticketCount.status[s.name].length==0)"
+									ng-hide="!vm.showInactiveStatuses && (!vm.data.ticketCount.status[s.name] || vm.data.ticketCount.status[s.name].length==0)"
 									ng-class="{active:vm.options.filters.status[s.name]}"
 									ng-click="vm.addToFilter('status',s.name)">
-									<span class="badge" ng-if="vm.ticketCount.status[s.name] && vm.ticketCount.status[s.name].length>0">
-											{{!vm.ticketCount.status[s.name].length ? 0 : vm.ticketCount.status[s.name].length}}
+									<span class="badge" ng-if="vm.data.ticketCount.status[s.name] && vm.data.ticketCount.status[s.name].length>0">
+											{{!vm.data.ticketCount.status[s.name].length ? 0 : vm.data.ticketCount.status[s.name].length}}
 									</span>
 									{{s.name}}
 								</a>
@@ -115,7 +115,7 @@
 								<strong>{{cf.title}}</strong>
 							</accordion-heading>
 							<ul class="list-group">
-								<a ng-repeat="(v,list) in vm.ticketCount.custom_fields[cf.title]"  class="list-group-item"
+								<a ng-repeat="(v,list) in vm.data.ticketCount.custom_fields[cf.title]"  class="list-group-item"
 										ng-class="{active:vm.options.filters.custom_fields[cf.title][v]}"
 										ng-click="vm.addToFilter('custom_fields.' + cf.title,v)">
 									<span class="badge">{{list.length}}</span>
@@ -132,6 +132,23 @@
 								<span class="input-group-btn">
 									<span class="input-group-btn label" data-ng-show="vm.createdSince">
 										{{vm.getCount('created_on','gt',vm.createdSince)}}
+									</span>
+								</span>
+							</p>
+						</accordion-group>
+						<accordion-group>
+							<accordion-heading>
+								<strong>Tools</strong>
+							</accordion-heading>
+							<div class="btn btn-default" ng-click="vm.resetCounts(vm.data.tickets,vm.data.ticketCount)">
+								Refresh Visible Ticket Counts
+							</div>
+							<br/>
+							<p class="input-group">
+								<input type="date" class="form-control" ng-model="vm.refreshFromDate"/>
+								<span class="input-group-btn">
+									<span class="btn btn-default" >
+										<span class="glyphicon glyphicon-cloud-download" ng-click="getUpdatedTickets(vm.refreshFromDate)"></span>
 									</span>
 								</span>
 							</p>
@@ -287,7 +304,7 @@
 													<span class="caret"></span>
 												</span>
 												<ul class="dropdown-menu">
-													<li ng-repeat="(n,list) in vm.ticketCount.custom_fields['QA Assigned Person']">
+													<li ng-repeat="(n,list) in vm.data.ticketCount.custom_fields['QA Assigned Person']">
 														<a href ng-click="vm.updateTicket(t,'custom_fields.QA Assigned Person',
 																															n,t.custom_fields['QA Assigned Person'])"
 																		ng-classs="{selected: n == t.custom_fields['QA Assigned Person']}">
