@@ -516,7 +516,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		
 		if (oldTicket) {
 			var udpateHidden = !vm.showCompletedMilestones 
-													&& getValueByPropPath(oldTicket.milestone_id,vm.milestones,'id','is_completed');
+													&& getFromList(oldTicket.milestone_id,vm.milestones,'id','is_completed');
 			if (updateHidden) { // remove from counts
 				updateTicketCount(oldTicket,vm.data.hiddenTicketCount,true);
 				vm.data.hiddenTickets.splice(index,1);
@@ -527,7 +527,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		}
 
 		var updateHidden = !vm.showCompletedMilestones 
-												&& getValueByPropPath(ticket.milestone_id,vm.milestones,'id','is_completed');
+												&& getFromList(ticket.milestone_id,vm.milestones,'id','is_completed');
 		if (updateHidden) {
 			vm.data.hiddenTickets.push(ticket);
 			updateTicketCount(ticket,vm.data.hiddenTicketCount);
