@@ -526,8 +526,8 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 			}
 		}
 
-		var updateHidden = !vm.showCompletedMilestones 
-												&& getFromList(ticket.milestone_id,vm.milestones,'id','is_completed');
+		var isCompleted = getFromList(ticket.milestone_id,vm.milestones,'id','is_completed');
+		var updateHidden = !vm.showCompletedMilestones && isCompleted
 		if (updateHidden) {
 			vm.data.hiddenTickets.push(ticket);
 			updateTicketCount(ticket,vm.data.hiddenTicketCount);
@@ -577,7 +577,9 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 			}
 		}).success(function(AllDownloaded) {
 			vm.data.lastCompletedUpdateDate = new Date();
-		});
+		}).error(function(err) {
+			throw err;
+		})
 	}
 	
 		// initialize an object path for properties that don't exist. 
