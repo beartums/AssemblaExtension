@@ -13,11 +13,17 @@
 							<th>Author</th>
 							<th>Date</th>
 							<th>Message</th>
+							<th></th>
 						</tr>
-						<tr ng-repeat="m in pu.bgPage.userMentions" ng-click="pu.gotoUrl(m.link)">
+						<tr class="hover-show" ng-repeat="m in pu.bgPage.userMentions" ng-click="pu.gotoUrl(m.link)">
 							<td><small>{{m.author_id | authorInitials: pu.bgPage.users}}</small></td>
 							<td><small>{{m.created_at  | date: 'yy-MM-dd hh:mm'}}</small></td>
 							<td style="width:530px"><small>{{m.message}}</small></td>
+							<td>
+								<!--button type="button" class="close blur-hide" prevent-default ng-click="pu.markAsRead(m)">
+									<span aria-hidden="true">&times;</span>
+								</button-->
+							</td>
 						</tr>
 					</table>
 				</div>

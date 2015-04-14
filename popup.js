@@ -42,13 +42,22 @@ angular.module("assembla")
 		pu.bgPage = chrome.extension.getBackgroundPage();
 		pu.options = aos.options;
 		pu.gotoUrl = gotoUrl;
-		pu.authorInitials = authorInitials
+		pu.authorInitials = authorInitials;
+		pu.markAsRead = markAsRead;
 		console.dir(pu.bgPage);
 		//aos.setOnReadyHandler(init);
 		
 		function gotoUrl(url) {
 			$window.open(url);
 		}
+		
+		function markAsRead(mention) {
+			as.markMentionAsRead({mentionId:mention.id
+			}).success(function(data) {
+				var idx = pu.bgPage.getMentions();
+			})
+		}
+		
 		
 		// get initials of author or mention from the userid
 		function authorInitials(id) {
