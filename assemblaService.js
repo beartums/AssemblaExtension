@@ -23,6 +23,7 @@ angular.module("assembla")
 			getTicket: getTicket,
 			getActivity: getActivity,
 			updateTicket: updateTicket,
+			markMentionAsRead: markMentionAsRead,
 			getUpdatedTickets: getUpdatedTickets,
 			getUserMentions: getUserMentions,
 			findFirstUpdatedSince: findFirstUpdatedSince,
@@ -86,7 +87,14 @@ angular.module("assembla")
 			hObj["Content-type"]="application/json";
 			return $http.put(url,{ticket:qObj.data},hObj);
 		}
-
+		
+		function markMentionAsRead(qObj) {
+			var url = "https://api.assembla.com/v1/user/mentions/" + qObj.mentionId +
+				"/mark_as_read.json";
+				
+			return $http.put(url,null,reqObj.headers);
+		}
+		
 		function getData(url, qObj, callingProcedure) {
 			if (!qObj.parms) qObj.parms = {};
 			if (!qObj.parms.per_page) qObj.parms.per_page = 100;
