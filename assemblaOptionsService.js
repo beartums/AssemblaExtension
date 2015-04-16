@@ -13,6 +13,7 @@ angular.module("assembla")
         mode: ''
       },
       saveOptions: saveOptions,
+			onchange: saveOptions,
 			setOnReadyHandler: setOnReadyHandler
     }
 

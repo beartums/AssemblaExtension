@@ -29,7 +29,8 @@
 				<br/>
 				<div class="row">
 					<div class="col-md-8 col-md-offset-2">
-						<button class="btn btn-default" ng-click="vm.resetCounts()">Update Ticket Counts</button>
+						<button class="btn btn-default" ng-click="vm.resetCounts()"
+							title="recalculate how many of each type of ticket">Update Ticket Counts</button>
 					</div>
 				</div>
 				<br />
@@ -38,7 +39,9 @@
 						<div class="input-group">
 							<input type="date" class="form-control" ng-model="vm.downloadTicketsSince">
 							<div class="input-group-btn">
-								<button class="btn btn-default" ng-click="vm.getUpdatedTickets(vm.downloadTicketsSince)">
+								<button class="btn btn-default" 
+											title="Download and add/merge all tickets since the entered date"
+											ng-click="vm.getUpdatedTickets(vm.downloadTicketsSince)">
 									<span class="fa fa-download"></span>
 								</button>
 							</div>
@@ -139,7 +142,7 @@
 						<div class="col-md-offset-5 col-md-1" style="vertical-align:middle;">
 							<br/>
 							<button class="btn btn-default" ng-click="vm.showTools=!vm.showTools">
-								<span class="hover-icon fa fa-wrench text-muted"></span>
+								<span class="hover-icon fa fa-sliders text-muted"></span>
 							</button>
 						</div>
 					</div>
@@ -147,7 +150,7 @@
 						<div class="col-md-2" id="perPage">
 							<div class="input-group">
 								<input type='number' class="form-control" ng-model-options="{debounce:1000}" ng-change="vm.optionChange()" ng-model="vm.options.itemsPerPage" />
-								<span class='input-group-addon'>T/p</span>
+								<span class='input-group-addon'><span class="fa fa-ticket"></span>/p</span>
 							</div>
 						</div>
 						<div class="col-md-7" id="pagination">

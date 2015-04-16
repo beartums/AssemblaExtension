@@ -144,8 +144,15 @@
 			<span class="caret"></span>
 		</span>
 		<div class="dropdown-menu" >
-			<input type="date" class="form-control" ng-model="vm.createdSince"
+			 <div style="display:inline-block; min-height:290px;">
+					<datepicker ng-model="vm.createdSince" prevent-default 
+					ng-change="vm.createdSinceFilterChange()"
+					show-weeks="false" class="well well-sm"></datepicker>
+			</div>
+			<!--span class="form" prevent-default>
+				<input type="date" class="form-control" ng-model="vm.createdSince"
 							ng-change="vm.createdSinceFilterChange()"/>
+			</span-->
 		</div>
 	</span>
 		&nbsp; &nbsp;
