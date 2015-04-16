@@ -398,7 +398,9 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aos
 			}
 		}).then(function() {
 			if (!vm.data.selectedSpace ) {
-				var p = getSelectedSpace();
+				var p = updateRelatedEntities({
+					spaces:true,milestones:true,users:true,tags:true,customFields:true,statuses:true
+				});
 			} else {
 				var p = $q.when('');
 			}
