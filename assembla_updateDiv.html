@@ -3,7 +3,10 @@
 							border-top:1px solid lightgrey; border-bottom:1px solid lightgrey; padding-top:3px
 							vertical-align: middle">
 	<div class="col-md-3">
+		<span class="fa fa-edit hover-icon" title="de-select all" ng-click="vm.selectedTickets=[]"></span>
+		&nbsp;
 		{{vm.selectedTickets.length}} ticket{{vm.selectedTickets.length>1?'s':''}} selected
+		
 	</div>
 	<div class="col-md-9 text-right" 
 			style="">
