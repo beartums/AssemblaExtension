@@ -1,7 +1,12 @@
-<div class="row">
-	<div class="col-md-12 text-right" 
-			style="position: relative; height:27px; top:1px; 
-							border-top:1px solid lightgrey; border-bottom:1px solid lightgrey; padding-top:3px">
+<div class="row"  style="background-color: mistyrose; position: relative; height:27px; top:1px;
+							padding-top:3px;
+							border-top:1px solid lightgrey; border-bottom:1px solid lightgrey; padding-top:3px
+							vertical-align: middle">
+	<div class="col-md-3">
+		{{vm.selectedTickets.length}} ticket{{vm.selectedTickets.length>1?'s':''}} selected
+	</div>
+	<div class="col-md-9 text-right" 
+			style="">
 		<span class="dropdown" dropdown id="devUpdate">
 			<span class="hover-btn dropdown-toggle" dropdown-toggle>
 				Assign Dev
