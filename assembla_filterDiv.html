@@ -1,0 +1,150 @@
+<div class="row">
+	<div class="col-md-3" id="textFilter">
+		<div class='input-group'>
+			<input type='text' class="form-control" ng-model="vm.filterText" ng-model-options="{debounce:1000}" placeholder="-filter text-" />
+			<span class='input-group-addon'>
+				<span class='glyphicon glyphicon-remove' ng-click="vm.filterText=''"></span>
+			</span>
+		</div>
+	</div>
+	<div class="col-md-9 text-right" 
+			style="position: relative; height:27px; top:8px; 
+							border-top:1px solid lightgrey; border-bottom:1px solid lightgrey; padding-top:3px"
+		<span class="dropdown" dropdown id="devFilter">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Dev
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-hover table-compressed">
+				<tr class="" prevent-default ng-repeat="u in vm.data.users"
+					ng-if="u.role.role!='watcher' || u.role.status==2"
+					ng-class="{active:vm.options.filters.user[u.id]}"
+					ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[u.id] || vm.data.ticketCount.assigned_to_id[u.id].length==0)"
+					title="{{u.name}} ({{u.role.role}})"
+					ng-click="vm.addToFilter('user',u.id)">
+						<td>
+							{{u.login}}
+						</td>
+						<td class="text-right">
+							<span class="badge pull-right" ng-if="vm.data.ticketCount.assigned_to_id[u.id] && vm.data.ticketCount.assigned_to_id[u.id].length>0">
+								{{!vm.data.ticketCount.assigned_to_id[u.id].length ? 0 : vm.data.ticketCount.assigned_to_id[u.id].length}}
+							</span>
+						</td>
+				</tr>
+				<tr class="" prevent-default ng-class="{active:vm.options.filters.user[vm._unassigned]}"
+							ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[vm._unassigned] || vm.data.ticketCount.assigned_to_id[vm._unassigned].length==0)"
+							ng-click="vm.addToFilter('user',vm._unassigned)">
+					<td>
+						{{vm._unassigned}}
+					</td>
+					<td class="text-right">
+						<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[vm._unassigned] && vm.data.ticketCount.assigned_to_id[vm._unassigned].length>0">
+							{{!vm.data.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.data.ticketCount.assigned_to_id[vm._unassigned].length}}
+						</span>
+					</td>
+				</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+		
+		<span class="dropdown" dropdown id="statusFilter">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Status
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-compressed table-hover">
+					<tr ng-repeat="s in vm.data.statuses" class="" prevent-default
+						ng-hide="!vm.showInactiveStatuses && (!vm.data.ticketCount.status[s.name] || vm.data.ticketCount.status[s.name].length==0)"
+						ng-class="{active:vm.options.filters.status[s.name]}"
+						ng-click="vm.addToFilter('status',s.name)">
+							<td>
+								{{s.name}}
+							</td>
+							<td>
+								<span class="badge" ng-if="vm.data.ticketCount.status[s.name] && vm.data.ticketCount.status[s.name].length>0">
+										{{!vm.data.ticketCount.status[s.name].length ? 0 : vm.data.ticketCount.status[s.name].length}}
+								</span>
+							</td>
+					</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+
+		<span class="dropdown" dropdown id="milestoneFilter">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Milestones
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-compressed table-hover">
+					<tr ng-repeat="m in vm.data.milestones" prevent-default
+							ng-class="{active:vm.options.filters.milestone[m.id]}"
+							ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
+							ng-click="vm.addToFilter('milestone',m.id)">
+						<td>
+							{{m.title}}
+						</td>
+						<td>
+							<span class="badge" ng-if="vm.data.ticketCount.milestone_id[m.id] && vm.data.ticketCount.milestone_id[m.id].length>0">
+								{{!vm.data.ticketCount.milestone_id[m.id].length ? 0 : vm.data.ticketCount.milestone_id[m.id].length}}
+							</span>
+						</td>
+					</tr>
+					<tr ng-class="{active:vm.options.filters.milestone[m.id]}"
+							ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
+							ng-click="vm.addToFilter('milestone',vm._unassigned)">
+							<td>
+								{{vm._unassigned}}
+							</td>
+							<td>
+								<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[vm._unassigned] && vm.data.ticketCount.assigned_to_id[vm._unassigned].length>0">
+									{{!vm.data.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.data.ticketCount.assigned_to_id[vm._unassigned].length}}
+								</span>
+							</td>
+					</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+		
+		<span class="dropdown" dropdown  ng-repeat="cf in vm.data.customFields"  ng-if="cf.title!='Due Date'">
+				<span class="hover-btn dropdown-toggle" dropdown-toggle>
+					{{cf.title=='QA Assigned Person'?'QA By':cf.title}}
+					<span class="caret"></span>
+				</span>
+				<div class="dropdown-menu">
+					<table class="table table-hover table-compressed">
+						<tr prevent-default ng-repeat="(v,list) in vm.data.ticketCount.custom_fields[cf.title]"  
+							ng-class="{active:vm.options.filters.custom_fields[cf.title][v]}"
+							ng-click="vm.addToFilter('custom_fields.' + cf.title,v)">
+							<td>
+								{{v}}
+							</td>
+							<td>
+								<span class="badge">{{list.length}}</span>
+							</td>
+						</tr>
+					</table>
+				</div>
+
+			&nbsp; &nbsp;
+		</span>
+
+	<span class="dropdown" dropdown id="createdFilter">
+		<span class="hover-btn dropdown-toggle" dropdown-toggle>
+		Created
+			<span class="caret"></span>
+		</span>
+		<div class="dropdown-menu" >
+			<input type="date" class="form-control" ng-model="vm.createdSince"
+							ng-change="vm.createdSinceFilterChange()"/>
+		</div>
+	</span>
+		&nbsp; &nbsp;
+	
+</div>
+					

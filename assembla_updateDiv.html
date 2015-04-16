@@ -1,0 +1,132 @@
+<div class="row">
+	<div class="col-md-12 text-right" 
+			style="position: relative; height:27px; top:1px; 
+							border-top:1px solid lightgrey; border-bottom:1px solid lightgrey; padding-top:3px">
+		<span class="dropdown" dropdown id="devUpdate">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Assign Dev
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-hover table-compressed">
+				<tr ng-repeat="u in vm.data.users"
+					ng-if="u.role.role!='watcher' || u.role.status==2"
+					ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[u.id] || vm.data.ticketCount.assigned_to_id[u.id].length==0)"
+					title="{{u.name}} ({{u.role.role}})"
+					ng-click="vm.updateTickets(vm.selectedTickets,'assigned_to_id',u.id)">
+						<td>
+							{{u.login}}
+						</td>
+				</tr>
+				<tr ng-class="{active:vm.options.filters.user[vm._unassigned]}"
+							ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[vm._unassigned] || vm.data.ticketCount.assigned_to_id[vm._unassigned].length==0)"
+							ng-click="vm.updateTickets(vm.selectedTickets,'assigned_to_id','')">
+					<td>
+						{{vm._unassigned}}
+					</td>
+				</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+		
+		<span class="dropdown" dropdown id="statusUpdate">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Status
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-compressed table-hover">
+					<tr ng-repeat="s in vm.data.statuses"
+						ng-hide="!vm.showInactiveStatuses && (!vm.data.ticketCount.status[s.name] || vm.data.ticketCount.status[s.name].length==0)"
+						ng-click="vm.updateTickets(vm.selectedTickets,'status',s.name)">
+							<td>
+								{{s.name}}
+							</td>
+					</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+
+		<span class="dropdown" dropdown id="milestoneUpdate">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Milestone
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-compressed table-hover">
+					<tr ng-repeat="m in vm.data.milestones"
+							ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
+							ng-click="vm.updateTickets(vm.selectedTickets,'milestone_id',m.id)">
+						<td>
+							{{m.title}}
+						</td>
+					</tr>
+					<tr 
+							ng-click="vm.updateTickets(vm.selectedTickets,'milestone_id','')">
+							<td>
+								{{vm._unassigned}}
+							</td>
+					</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+		
+		<span class="dropdown" dropdown id="milestoneUpdate">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Bug
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-compressed table-hover">
+					<tr ng-repeat="(v,list) in vm.data.ticketCount.custom_fields['QA']"
+							ng-click="vm.updateTickets(vm.selectedTickets,'custom_fields.QA',(v==vm._blank?'':v))">
+						<td>
+							{{v}}
+						</td>
+					</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+		
+		<span class="dropdown" dropdown id="milestoneUpdate">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Assign QA
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-compressed table-hover">
+					<tr ng-repeat="(v,list) in vm.data.ticketCount.custom_fields['QA Assigned Person']"
+							ng-click="vm.updateTickets(vm.selectedTickets,'custom_fields.QA Assigned Person',(v==vm._blank?'':v))">
+						<td>
+							{{v}}
+						</td>
+					</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+		
+		<span class="dropdown" dropdown id="milestoneUpdate">
+			<span class="hover-btn dropdown-toggle" dropdown-toggle>
+				Component
+				<span class="caret"></span>
+			</span>
+			<div class="dropdown-menu">
+				<table class="table table-compressed table-hover">
+					<tr ng-repeat="(v,list) in vm.data.ticketCount.custom_fields['Component']"
+							ng-click="vm.updateTickets(vm.selectedTickets,'custom_fields.Component',(v==vm._blank?'':v))">
+						<td>
+							{{v}}
+						</td>
+					</tr>
+				</table>
+			</div>
+		</span>
+		&nbsp; &nbsp;
+			
+</div>
+					

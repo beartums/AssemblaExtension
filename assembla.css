@@ -6,7 +6,7 @@
   padding: 5px 5px 5px 5px;
 }
 .hover-btn:hover {
-  cursor: pointer;
+  cursor: pointer; 
 	background: #c7d0d6;
   background-image: -webkit-linear-gradient(top, #c7d0d6, #979fa3);
   -webkit-border-radius: 5;
@@ -31,4 +31,22 @@
 }
 [ng-click], [data-ng-click] {
 	cursor: pointer;
+}
+
+[ng-click], [data-ng-click] {
+	cursor: pointer;
+}
+
+.pagination {
+	margin-top: 0;
+}
+.hover-icon {
+	font-weight: bold;
+	}
+.hover-icon:hover {
+	color: black !important;
+	font-weight: bold;
+}
+.invisible {
+	visibility: hidden;
 }

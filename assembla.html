@@ -11,186 +11,146 @@
 
 	<!-- Cascading Style Sheets -->
 	<link href="css/bootstrap.css" rel="stylesheet" media="screen">
+	<link href="css/font-awesome.min.css" rel="stylesheet" media="screen">
 	<link href="assembla.css" rel="stylesheet" media="screen">
   </head>
   <body data-ng-controller="assemblaController as vm">
-    <div class="container">
-			<div class="row">
-				<div class="col-md-3" id="sidebar" ng-if="vm.showTools" 
-					style="background-color:WhiteSmoke; padding:20px; min-height:100%;">
-					<div class="row" ng-hide="vm.users.length==0" id="usersDiv">
-						<div>
-							<h3>Tools</h3>
-						</div>
-						<accordion close-others="false" style="padding:2px">
-						<accordion-group id="milestonesGroup" is-open="milestoneIsOpen">
-							<accordion-heading>
-								<strong>Milestones</strong>
-								<i class="glyphicon pull-right" title="Show/hide completed milestones"
-															data-ng-show="milestoneIsOpen"
-															data-ng-class="{'glyphicon-resize-small':vm.showCompletedMilestones,'glyphicon-resize-full':!vm.showCompletedMilestones}"
-															prevent-default
-															data-ng-click="vm.showCompletedMilestones=!vm.showCompletedMilestones;
-																						vm.toggleTicketsInCompletedMilestones(vm.showCompletedMilestones)">
-								</i>
-							</accordion-heading>
-								<ul class="list-group">
-									<a class="list-group-item" ng-repeat="m in vm.milestones" 
-											ng-class="{active:vm.options.filters.milestone[m.id]}"
-											ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
-											ng-click="vm.addToFilter('milestone',m.id)">
-											<span class="badge" ng-if="vm.data.ticketCount.milestone_id[m.id] && vm.data.ticketCount.milestone_id[m.id].length>0">
-												{{!vm.data.ticketCount.milestone_id[m.id].length ? 0 : vm.data.ticketCount.milestone_id[m.id].length}}
-											</span>
-											{{m.title}}
-									</a>
-									<a class="list-group-item" 
-											ng-class="{active:vm.options.filters.milestone[vm._unassigned]}"
-											ng-click="vm.addToFilter('milestone',vm._unassigned)">
-											<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[vm._unassigned] && vm.data.ticketCount.assigned_to_id[vm._unassigned].length>0">
-												{{!vm.data.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.data.ticketCount.assigned_to_id[vm._unassigned].length}}
-											</span>
-											{{vm._unassigned}}
-									</a>
-								</ul>
-						</accordion-group>
-						<accordion-group is-open="usersIsOpen">
-							<accordion-heading>
-								<strong>Users</strong>
-								<i class="glyphicon pull-right" title="Show/hide inactive users"
-															prevent-default
-															data-ng-show="usersIsOpen"
-															data-ng-class="{'glyphicon-resize-small':vm.showInactiveUsers,'glyphicon-resize-full':!vm.showInactiveUsers}"
-															data-ng-click="vm.showInactiveUsers = !vm.showInactiveUsers">
-								</i>
-							</accordion-heading>
-								<ul class="list-group">
-									<a class="list-group-item" ng-repeat="u in vm.users" 
-											ng-if="u.role.role!='watcher' || u.role.status==2"
-											ng-class="{active:vm.options.filters.user[u.id]}"
-											ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[u.id] || vm.data.ticketCount.assigned_to_id[u.id].length==0)"
-											title="{{u.name}} ({{u.role.role}})"
-											ng-click="vm.addToFilter('user',u.id)">
-											<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[u.id] && vm.data.ticketCount.assigned_to_id[u.id].length>0">
-												{{!vm.data.ticketCount.assigned_to_id[u.id].length ? 0 : vm.data.ticketCount.assigned_to_id[u.id].length}}
-											</span>
-											{{u.login}}
-									</a>
-									<a class="list-group-item" 
-											ng-class="{active:vm.options.filters.user[vm._unassigned]}"
-											ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[vm._unassigned] || vm.data.ticketCount.assigned_to_id[vm._unassigned].length==0)"
-											ng-click="vm.addToFilter('user',vm._unassigned)">
-											<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[vm._unassigned] && vm.data.ticketCount.assigned_to_id[vm._unassigned].length>0">
-												{{!vm.data.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.data.ticketCount.assigned_to_id[vm._unassigned].length}}
-											</span>
-											{{vm._unassigned}}
-									</a>
-								</ul>
-						</accordion-group>
-						<accordion-group is-open="statusesIsOpen">
-							<accordion-heading>
-								<strong>Statuses</strong>
-								<i class="pull-right glyphicon" title="Show/hide inactive statuses"
-									prevent-default
-									data-ng-show="statusesIsOpen"
-									data-ng-class="{'glyphicon-resize-small':vm.showInactiveStatuses,'glyphicon-resize-full':!vm.showInactiveStatuses}"
-									data-ng-click="vm.showInactiveStatuses = !vm.showInactiveStatuses;">
-								</i>
-							</accordion-heading>
-								
-							<ul class="list-group">
-								<a ng-repeat="s in vm.statuses" class="list-group-item"
-									ng-hide="!vm.showInactiveStatuses && (!vm.data.ticketCount.status[s.name] || vm.data.ticketCount.status[s.name].length==0)"
-									ng-class="{active:vm.options.filters.status[s.name]}"
-									ng-click="vm.addToFilter('status',s.name)">
-									<span class="badge" ng-if="vm.data.ticketCount.status[s.name] && vm.data.ticketCount.status[s.name].length>0">
-											{{!vm.data.ticketCount.status[s.name].length ? 0 : vm.data.ticketCount.status[s.name].length}}
-									</span>
-									{{s.name}}
-								</a>
-							</ul>
-						</accordion-group>
-						<accordion-group ng-repeat="cf in vm.customFields">
-							<accordion-heading>
-								<strong>{{cf.title}}</strong>
-							</accordion-heading>
-							<ul class="list-group">
-								<a ng-repeat="(v,list) in vm.data.ticketCount.custom_fields[cf.title]"  class="list-group-item"
-										ng-class="{active:vm.options.filters.custom_fields[cf.title][v]}"
-										ng-click="vm.addToFilter('custom_fields.' + cf.title,v)">
-									<span class="badge">{{list.length}}</span>
-									{{v}}
-								</a>
-							</ul>
-						</accordion-group>
-						<accordion-group>
-							<accordion-heading>
-								<strong>Created Since</strong>
-							</accordion-heading>
-							<p class="input-group">
-								<input type="date" class="form-control" ng-model="vm.createdSince" ng-change="vm.createdSinceFilterChange()"/>
-								<span class="input-group-btn">
-									<span class="input-group-btn label" data-ng-show="vm.createdSince">
-										{{vm.getCount('created_on','gt',vm.createdSince)}}
-									</span>
-								</span>
-							</p>
-						</accordion-group>
-						<accordion-group>
-							<accordion-heading>
-								<strong>Tools</strong>
-							</accordion-heading>
-							<div class="btn btn-default" ng-click="vm.resetCounts(vm.data.tickets,vm.data.ticketCount)">
-								Refresh Visible Ticket Counts
-							</div>
-							<br/>
-							<p class="input-group">
-								<input type="date" class="form-control" ng-model="vm.refreshFromDate"/>
-								<span class="input-group-btn">
-									<span class="btn btn-default" ng-click="vm.getUpdatedTickets(vm.refreshFromDate)" >
-										<span class="glyphicon glyphicon-cloud-download"></span>
-									</span>
-								</span>
-							</p>
-						</accordion-group>
-					</accordion>
+		<div pageslide ps-side="left" ps-open="vm.showTools" ps-auto-close="true" ps-class="panel">
+			<div class="container-fluid">
+				<div class="row">
+					<br/>
+					<button type="button" class="close pull-right" ng-click="vm.showTools=!vm.showTools">
+						<span>&times;&nbsp;&nbsp;</span>
+					</button>
+					<div class="col-md-12 text-center">
+						<h2>Tools</h2>
+					</div>
 				</div>
-			</div>
-				<div id="main" data-ng-class="{'col-md-9': vm.showTools, 'col-md-12': !vm.showTools}">
-					<div class="row" id="heading">
-						<div class="col-md-12">
-							<h1>{{vm.selectedSpace.name}}</h1>
+				<br/>
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2">
+						<button class="btn btn-default" ng-click="vm.resetCounts()">Update Ticket Counts</button>
+					</div>
+				</div>
+				<br />
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2">
+						<div class="input-group">
+							<input type="date" class="form-control" ng-model="vm.downloadTicketsSince">
+							<div class="input-group-btn">
+								<button class="btn btn-default" ng-click="vm.getUpdatedTickets(vm.downloadTicketsSince)">
+									<span class="fa fa-download"></span>
+								</button>
+							</div>
 						</div>
 					</div>
-					<div class="row" id="tools">
-						<div class="col-md-1" id="showToolsButton">
-							<a href="#" class="btn btn-default" 
-									data-ng-class="{active:vm.showTools}" 
-									data-ng-click="vm.showTools=!vm.showTools">
-								<span class="glyphicon" 
-											data-ng-class="{'glyphicon-arrow-right': !vm.showTools, 
-																			'glyphicon-arrow-left':vm.showTools}">
-								</span>
-							</a>
+				</div>				
+				<br/>
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2 text-center">
+						<button class="btn btn-default" ng-click="vm.updateRelatedEntities(vm.entityUpdateObj)">Update Relations</button>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2">
+						<span>
+							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.spaces || vm.entityUpdateObj.spaces===true"></span>
+							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.spaces==vm._fetchingText"></span>
+							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.spaces==vm._successText"></span>
+							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.spaces==vm._failureText"></span>
+						</span>
+						<input type='checkbox' ng-model="vm.entityUpdateObj.spaces" ng-init="true">
+						Spaces
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2">
+						<span>
+							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.milestones || vm.entityUpdateObj.milestones===true"></span>
+							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.milestones==vm._fetchingText"></span>
+							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.milestones==vm._successText"></span>
+							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.milestones==vm._failureText"></span>
+						</span>
+						<input type='checkbox' ng-model="vm.entityUpdateObj.milestones" ng-init="true">
+						Milestones
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2">
+						<span>
+							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.users || vm.entityUpdateObj.users===true"></span>
+							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.users==vm._fetchingText"></span>
+							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.users==vm._successText"></span>
+							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.users==vm._failureText"></span>
+						</span>
+						<input type='checkbox' ng-model="vm.entityUpdateObj.users" ng-init="true">
+						Users
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2">
+						<span>
+							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.customFields || vm.entityUpdateObj.customFields===true"></span>
+							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.customFields==vm._fetchingText"></span>
+							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.customFields==vm._successText"></span>
+							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.customFields==vm._failureText"></span>
+						</span>
+						<input type='checkbox' ng-model="vm.entityUpdateObj.customFields" ng-init="true">
+						Custom Fields
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2">
+						<span>
+							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.statuses || vm.entityUpdateObj.statuses===true"></span>
+							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.statuses==vm._fetchingText"></span>
+							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.statuses==vm._successText"></span>
+							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.statuses==vm._failureText"></span>
+						</span>
+						<input type='checkbox' ng-model="vm.entityUpdateObj.statuses" ng-init="true">
+						Statuses
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-8 col-md-offset-2">
+						<span>
+							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.tags || vm.entityUpdateObj.tags===true"></span>
+							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.tags==vm._fetchingText"></span>
+							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.tags==vm._successText"></span>
+							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.tags==vm._failureText"></span>
+						</span>
+						<input type='checkbox' ng-model="vm.entityUpdateObj.tags" ng-init="true">
+						Tags
+					</div>
+				</div>
+				
+			</div>
+		</div>
+    <div class="container">
+			<div class="row">
+				<div id="main" class="col-md-12">
+					<div class="row" id="heading">
+						<div class="col-md-6">
+							<h1>{{vm.data.selectedSpace.name}}</h1>
 						</div>
-						<div class="col-md-3" id="ticketFilter">
-							<div class='input-group'>
-								<span class='input-group-addon'><span class="glyphicon glyphicon-search"></span></span>
-								<input type='text' class="form-control" ng-model="vm.filterText" ng-model-options="{debounce:1000}" placeholder="-filter text-" />
-								<span class='input-group-addon'><span class='glyphicon glyphicon-remove'></span></span>
-							</div>
+						<div class="col-md-offset-5 col-md-1" style="vertical-align:middle;">
+							<br/>
+							<button class="btn btn-default" ng-click="vm.showTools=!vm.showTools">
+								<span class="hover-icon fa fa-wrench text-muted"></span>
+							</button>
 						</div>
-						<div class="col-md-2" id="currentPage">
-							<div class="input-group">
-								<span class='input-group-addon'>#p</span>
-								<input type='number' class="form-control" ng-model-options="{debounce:1000}" ng-model='vm.page' ng-init="vm.page=1" />
-							</div>
-						</div>
+					</div>
+					<div class='row' id='paginationRow'>
 						<div class="col-md-2" id="perPage">
 							<div class="input-group">
 								<input type='number' class="form-control" ng-model-options="{debounce:1000}" ng-change="vm.optionChange()" ng-model="vm.options.itemsPerPage" />
-								<span class='input-group-addon'>i/p</span>
+								<span class='input-group-addon'>T/p</span>
 							</div>
+						</div>
+						<div class="col-md-7" id="pagination">
+							<pagination total-items="filteredTickets.length" ng-model="vm.page" max-size='8'
+													boundary-links="true" items-per-page="vm.options.itemsPerPage" rotate="true">
+							</pagination>
 						</div>
 						<div class="col-md-3" id="ticketCount">
 							ticket count: 
@@ -201,13 +161,9 @@
 							<span class="badge">{{vm.data.tickets.length}}</span>
 						</div>
 					</div>
-					<div class='row' id='paginationRow'>
-						<div class="col-md-12 text-center" id="pagination">
-							<pagination total-items="filteredTickets.length" ng-model="vm.page" max-size='10'
-													boundary-links="true" items-per-page="vm.options.itemsPerPage" rotate="true">
-							</pagination>
-						</div>
-					</div>
+					<div ng-include="!vm.selectedTickets || vm.selectedTickets.length==0 
+															? 'assembla_filterDiv.html'
+															: 'assembla_updateDiv.html'"></div>
 					<div class="row" id="ticketstable" >
 						<div class="col-md-12">
 							<table class="table" ng-hide="vm.data.tickets.length==0">
@@ -215,6 +171,7 @@
 									<tr>
 										<th></th>
 										<th ng-click="vm.sort('number')">Number <span class="text-muted" ng-class="vm.sortClasses['number']"</th>
+										<th></th>
 										<th>Summary</th>
 										<th ng-click="vm.sort('status')">Status <span class="text-muted" ng-class="vm.sortClasses['status']"</th>
 										<th ng-click="vm.sort('created_on')">Created <span class="text-muted" ng-class="vm.sortClasses['created_on']"</th>
@@ -222,116 +179,38 @@
 										<th ng-click="vm.sort('milestone')">Milestone <span class="text-muted" ng-class="vm.sortClasses['milestone']"</th>
 										<th ng-click="vm.sort('custom_fields.QA Assigned Person')">QA By <span class="text-muted" ng-class="vm.sortClasses['custom_fields.QA Assigned Person']"</th>
 										<th ng-click="vm.sort('custom_fields.QA')">QA <span class="text-muted" ng-class="vm.sortClasses['custom_fields.QA']"</th>
-										<th></th>
 										<th>Desc?</th>
 									</tr>
-									<tr data-ng-repeat-start="t in filteredTickets = (
+									<tr ng-class="{'bg-success': t.updateSuccess,'bg-danger': t.updateFailure}"
+											data-ng-repeat-start="t in filteredTickets = (
 											vm.data.tickets	| filter: vm.filterTickets) 
 																			| startFrom: (vm.page-1) * vm.options.itemsPerPage
 																			| limitTo: vm.options.itemsPerPage">
 										<td data-ng-click="vm.toggle(t,'expanded')">
 											<span class="glyphicon" data-ng-class="{'glyphicon-minus':t.expanded, 'glyphicon-plus':!t.expanded}"></span>
 										</td>
-										<td>{{t.number}}</td>
+										<td class="text-center" >{{t.number}}</td>
+										<td>
+											<span class="fa fa-edit hover-icon"
+													ng-style="{'color':vm.selectedTickets.indexOf(t)>-1?'green':'lightgrey'}"
+													ng-click="vm.toggleTicketSelected(t)" >
+											</span>
+										</td>
 										<td title="{{t.summary}}">{{vm.abbreviate(t.summary,30,20)}}</td>
 										<td>
-											<span class="dropdown" dropdown>
-												<span class="hover-btn dropdown-toggle" dropdown-toggle >
 													{{t.status}}
-													<span class="caret"></span>
-												</span>
-												<ul class="dropdown-menu">
-													<li ng-repeat="stat in vm.statuses">
-														<a href ng-click="vm.updateTicket(t,'status',stat.name,t.status)"
-																		ng-class="{selected: stat.name==t.status}">
-															{{stat.name}}
-														</a>
-													</li>
-												</ul>
-											</span>
 										</td>
 										<td>{{t.created_on | date:'dd MMM yy'}}</td>
-										<td title="{{vm.getFromList(t.assigned_to_id,vm.users,'id','login')}}">
-											<span dropdown class="dropdown">
-												<span dropdown-toggle class="dropdown-toggle hover-btn">
-													{{vm.getFromList(t.assigned_to_id,vm.users,'id','initials') || '--'}}
-													<span class="caret"></span>
-												</span>
-												<ul class="dropdown-menu">
-													<li ng-repeat="u in vm.users 
-																| filter : {role:{role:'!watcher',status:'2'}}
-																| orderBy: '(name || login || email)'">
-														<a href ng-click="vm.updateTicket(t,'assigned_to_id',u.id,t.assigned_to_id)"
-																		ng-class="{selected: u.id==t.assigned_to_id}">
-														{{u.name || u.login || u.email}}
-														</a>
-													</li>
-													<li>
-														<a href ng-click="vm.updateTicket(t,'assigned_to_id','',t.assigned_to_id)"
-																		ng-class="{selected: !t.assigned_to_id || t.assigned_to_id==''}">
-														{{vm._unassigned}}
-														</a>
-													</li>
-												</ul>
-											</span>
+										<td title="{{vm.getFromList(t.assigned_to_id,vm.data.users,'id','login')}}">
+													{{vm.getFromList(t.assigned_to_id,vm.data.users,'id','initials') || '--'}}
 										</td>
-										<td title="{{vm.getFromList(t.milestone_id,vm.milestones,'id','title')}}">
-											<span dropdown class="dropdown">
-												<span class="hover-btn dropdown-toggle" dropdown-toggle>
-													{{vm.getFromList(t.milestone_id,vm.milestones,'id','initials') || '--'}}
-													<span class="caret"></span>
-												</span>
-												<ul class="dropdown-menu">
-													<li ng-repeat="m in vm.milestones | filter : {is_completed:false}">
-														<a href ng-click="vm.updateTicket(t,'milestone_id',m.id,t.milestone_id)"
-															ng-class="{selected: t.milestone_id && m.id==t.milestone_id}">
-															{{m.title}}
-														</a>
-													</li>
-													<li>
-														<a href ng-click="vm.updateTicket(t,'milestone_id','',t.milestone_id)"
-															ng-class="{selected: !t.milestone_id || ''==t.milestone_id}">
-															{{vm._unassigned}}
-														</a>
-													</li>
-												</ul>
-											</span>
+										<td title="{{vm.getFromList(t.milestone_id,vm.data.milestones,'id','title')}}">
+													{{vm.getFromList(t.milestone_id,vm.data.milestones,'id','initials') || '--'}}
 										</td>
 										<td title="{{t.custom_fields['QA Assigned Person']}}">
-											<span dropdown class="dropdown">
-												<span class="hover-btn dropdown-toggle" dropdown-toggle>
 													{{vm.getInitials(t.custom_fields['QA Assigned Person'] || '--')}}
-													<span class="caret"></span>
-												</span>
-												<ul class="dropdown-menu">
-													<li ng-repeat="(n,list) in vm.data.ticketCount.custom_fields['QA Assigned Person']">
-														<a href ng-click="vm.updateTicket(t,'custom_fields.QA Assigned Person',
-																															n,t.custom_fields['QA Assigned Person'])"
-																		ng-classs="{selected: n == t.custom_fields['QA Assigned Person']}">
-															{{n}}
-														</a>
-													</li>
-													<li>
-														<div class="input-group input-group-sm">
-															<input type="text" class="form-control" prevent-default ng-model="vm.qapName">
-															<span class="input-group-btn">
-																<span class="btn btn-default btn-sm" ng-click="vm.updateTicket(t,'custom_fields.QA Assigned Person',
-																															vm.qapName,t.custom_fields['QA Assigned Person'])">
-																	<span class="text-success glyphicon glyphicon-ok"></span>
-																</span>
-															</span>
-														</div>
-													</li>
-												</ul>
-											</span>
 										</td>
 										<td>{{t.custom_fields['QA']}}</td>
-										<td>
-											<span  data-ng-repeat="(k,v) in t.parsed">
-												{{k}}
-												<span data-ng-if="!$last">, </span>
-											</span>
-										</td>
 										<td ><span class="glyphicon" data-ng-click="vm.parseDescription(t)"
 												data-ng-class="{'glyphicon-ok': vm.isValidTicket(t), 'glyphicon-remove': !vm.isValidTicket(t), 
 																		'text-success': vm.isValidTicket(t), 'text-danger': !vm.isValidTicket(t)}">
@@ -355,7 +234,7 @@
 	    <!-- Scripts -->
 		<script src="js/jquery-2.0.3.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
-    <script src="js/angular.js" charset="utf-8"></script>
+    <script src="js/angular.min.js" charset="utf-8"></script>
     <script src="js/angular-pageslide-directive.min.js" charset="utf-8"></script>
     <script src="js/localforage.js" charset="utf-8"></script>
     <script src="js/angular-localForage.js" charset="utf-8"></script>
