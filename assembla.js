@@ -243,10 +243,12 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aos
 	function sort(sortField) {
 		if (sortField == vm.options.currentSortColumn) {
 			vm.options.currentSortAscending = !vm.options.currentSortAscending;
-		} else {
+		} else if (sortField) { // if null, use the current sort column, if any
 			vm.options.currentSortColumn = sortField;
 			vm.options.currentSortAscending = true;
 		}
+		if (!vm.options.currentSortColumn || vm.options.currentSortColumn=="") return;
+		
 		vm.sortClasses={} // for display of asc and desc markers
 		vm.sortClasses[sortField] = 'glyphicon glyphicon-chevron-' + (vm.options.currentSortAscending ? 'up' : 'down');
 
@@ -424,6 +426,7 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aos
 				getUpdatedTickets(vm.data.lastCompletedUpdateDate).success(function(data) {
 					vm.data.lastCompletedUpdateDate = new Date();
 					vm.data.mostRecentUpdateDate = null;
+					if (vm.options.currentSortColumn) sort;
 				});
 			});
 		});
