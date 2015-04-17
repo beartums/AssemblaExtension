@@ -255,10 +255,25 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aos
 			if (sortField == "milestone") {
 				valA = getFromList(a.milestone_id,vm.data.milestones,'id','initials');
 				valB = getFromList(b.milestone_id,vm.data.milestones,'id','initials');
+			} else if (sortField == "assigned_to_id") {
+				valA = getFromList(a.assigned_to_id,vm.data.users,'id','initials');
+				valB = getFromList(b.assigned_to_id,vm.data.users,'id','initials');
 			} else {
 				valA = getValueByPropPath(sortField,a,"");
 				valB = getValueByPropPath(sortField,b,"");
 			}
+			if (sortField=='number') {
+				valA = parseInt(valA || 0);
+				valB = parseInt(valB || 0);
+			} else {
+				valA = valA || '';
+				valB = valB || '';
+				valA = valA.toString ? valA.toString() : valA;
+				valB = valB.toString ? valB.toString() : valB;
+				valA = valA.toLowerCase();
+				valB = valB.toLowerCase();
+			}
+			
 			if (!vm.options.currentSortAscending) { var h = valA; valA=valB; valB = h; }
 			
 			if (valA<valB) return -1;
