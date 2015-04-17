@@ -42,30 +42,36 @@ angular.module("assembla", ['ui.bootstrap','directiveModule','LocalForageModule'
   })
 
 	.controller("assemblaController", 
-			['$http', '$scope', '$filter', '$timeout', 'assemblaService', 'assemblaOptionsService', '$localForage',
+			['$q','$http', '$scope', '$filter', '$timeout', 'assemblaService', 'assemblaOptionsService', '$localForage',
 		assemblaControllerFunction
 	]);
 
-function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $lf) {
+function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aos, $lf) {
 	var vm = this
 
 	vm._unassigned = '[unassigned]';
 	vm._blank = '[blank]';
 	vm._ignore = '@_@ignore@_@';
+	vm._fetchingText = "fetching..."
+	vm._successText = "success"
+	vm._failureText = "failure"
+
 	vm.options = aos.options
 	vm.options.filters = {};
-	vm.milestones = [];
+	vm.showUsers = false;;
 	vm.epics = [];
 	vm.associations = [];
-	vm.selectedSpace = null
 	vm.selectedMilestone = null;
-	vm.users = [];
+	vm.entityUpdateObj = {}
 	vm.data = {};
-	vm.tags = [];
-	vm.statuses = [],
-	vm.customFields = [];
-	vm.showUsers = false;;
-	vm.data.ticketCount = {}
+	vm.data.milestones = [];
+	vm.data.users = [];
+	vm.data.tags = [];
+	vm.data.statuses = [],
+	vm.data.customFields = [];
+	vm.data.ticketCount = {};
+	vm.data.selectedSpace = null;
+	vm.selectedTickets = [];
 
 	vm.selectMilestone = selectMilestone;
 	vm.refresh = refresh;
@@ -81,13 +87,15 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	vm.sort = sort;
 	vm.createdSinceFilterChange = createdSinceFilterChange;
 	vm.getCount = getCount;
-	vm.updateTicket = updateTicket;
+	vm.updateTickets = updateTickets;
 	vm.getUpdatedTickets=getUpdatedTickets;
 	vm.resetCounts = resetCounts;
 	vm.cancel = cancel;
 	vm.optionChange = aos.onchange;
 	vm.cancelClick = cancelClick;
+	vm.toggleTicketSelected = toggleTicketSelected;
 	vm.toggleTicketsInCompletedMilestones =  toggleTicketsInCompletedMilestones;
+	vm.updateRelatedEntities= updateRelatedEntities;
 	
 	aos.setOnReadyHandler(refresh);
 	return vm;
@@ -196,6 +204,15 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		});
 	}
 	
+	function toggleTicketSelected(ticket) {
+		if (!vm.selectedTickets) vm.selectedTickets = [];
+		var idx = vm.selectedTickets.indexOf(ticket);
+		if (idx==-1) {
+			vm.selectedTickets.push(ticket);
+		} else {
+			vm.selectedTickets.splice(idx,1);
+		}
+	}
 	
 	// TODO: Tickets found during Assembla Update: check hidden AND live tickets for matches
 	function toggleTicketsInCompletedMilestones(showCompletedMilestones) {
@@ -209,7 +226,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		} else {
 			var deletedIdxs = [];
 			for (var i=0; i<vm.data.tickets.length; i++) {
-				var isCompleted = getFromList(vm.data.tickets[i].milestone_id,vm.milestones,'id','is_completed');
+				var isCompleted = getFromList(vm.data.tickets[i].milestone_id,vm.data.milestones,'id','is_completed');
 				if (isCompleted) {
 					var ticket = vm.data.tickets[i];
 					vm.data.hiddenTickets.push(ticket);
@@ -226,22 +243,39 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	function sort(sortField) {
 		if (sortField == vm.options.currentSortColumn) {
 			vm.options.currentSortAscending = !vm.options.currentSortAscending;
-		} else {
+		} else if (sortField) { // if null, use the current sort column, if any
 			vm.options.currentSortColumn = sortField;
 			vm.options.currentSortAscending = true;
 		}
+		if (!vm.options.currentSortColumn || vm.options.currentSortColumn=="") return;
+		
 		vm.sortClasses={} // for display of asc and desc markers
 		vm.sortClasses[sortField] = 'glyphicon glyphicon-chevron-' + (vm.options.currentSortAscending ? 'up' : 'down');
 
 		vm.data.tickets.sort(function(a,b) {
 			var valA, valB
 			if (sortField == "milestone") {
-				valA = getFromList(a.milestone_id,vm.milestones,'id','initials');
-				valB = getFromList(b.milestone_id,vm.milestones,'id','initials');
+				valA = getFromList(a.milestone_id,vm.data.milestones,'id','initials');
+				valB = getFromList(b.milestone_id,vm.data.milestones,'id','initials');
+			} else if (sortField == "assigned_to_id") {
+				valA = getFromList(a.assigned_to_id,vm.data.users,'id','initials');
+				valB = getFromList(b.assigned_to_id,vm.data.users,'id','initials');
 			} else {
 				valA = getValueByPropPath(sortField,a,"");
 				valB = getValueByPropPath(sortField,b,"");
 			}
+			if (sortField=='number') {
+				valA = parseInt(valA || 0);
+				valB = parseInt(valB || 0);
+			} else {
+				valA = valA || '';
+				valB = valB || '';
+				valA = valA.toString ? valA.toString() : valA;
+				valB = valB.toString ? valB.toString() : valB;
+				valA = valA.toLowerCase();
+				valB = valB.toLowerCase();
+			}
+			
 			if (!vm.options.currentSortAscending) { var h = valA; valA=valB; valB = h; }
 			
 			if (valA<valB) return -1;
@@ -251,8 +285,8 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	}
 	
 	function getUserLogin(id) {
-		if (!id || vm.users.length<1) return "";
-		return vm.users.reduce(function(login, user) {
+		if (!id || vm.data.users.length<1) return "";
+		return vm.data.users.reduce(function(login, user) {
 			if (login) return login;
 			return user.id == id ? user.login : null;
 		},null);
@@ -260,6 +294,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	
 	function getCount(ticketPropName, comp, value) {
 		var cnt = 0
+		if (!vm.data || !vm.data.tickets) return 0;
 		vm.data.tickets.forEach(function(t) {
 			cnt += evalCompare(t, ticketPropName,comp,value) ? 1 : 0;
 		});
@@ -298,7 +333,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 				if (act.object.toLowerCase()!=='ticket' && act.operation.toLowerCase()=='created') {
 					if (!isin(act.object_id,tickets,'id')) {
 						as.getTicket({
-							spaceId: vm.selectedSpace.id,
+							spaceId: vm.data.selectedSpace.id,
 							ticketId: act.object_id
 						}).success(function(data) {
 							if (isin(data.id,vm.data.tickets,'id')) return;
@@ -312,8 +347,9 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 	}
 	
 	function addToFilter(propName,id) {
-		var filter = initPropPath(vm.options.filters,propName,{})
+		var filter = initPropPath(vm.options.filters,propName,{});
 		filter[id] = !filter[id];
+		vm.optionChange();
 	}
 	
 	function filterTickets(ticket,idx) {
@@ -325,7 +361,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		var ignoreStatus = !opts.filters || !hasTrueProperty(vm.options.filters.status,true);
 		var ignoreText = !vm.filterText || vm.filterText.trim()=="";
 		var ignoreCustomFields = {};
-		vm.customFields.forEach(function(field) {
+		vm.data.customFields.forEach(function(field) {
 			ignoreCustomFields[field.title] = !opts.filters.custom_fields 
 																				|| !hasTrueProperty(vm.options.filters.custom_fields[field.title],true);
 		});
@@ -360,72 +396,140 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 
 	function refresh() {
 		init();
-		as.getSpaces().success(function(data) {
-			vm.selectedSpace = data[0];
-			// Get tickets
-			$lf.bind($scope, {
-				key: 'vm.data',
-				defaultValue: {
-					tickets: [],
-					ticketCount: {},
-					hiddenTickets: [],
-					hiddenTicketCount: {},
-					epics: {},
-					lastCompletedUpdateDate: '2006-01-01',
-					mostRecentUpdateDate: null
-				}
-			}).then(function() {
+		// Get tickets
+		$lf.bind($scope, {
+			key: 'vm.data',
+			defaultValue: {
+				tickets: [],
+				ticketCount: {},
+				hiddenTickets: [],
+				hiddenTicketCount: {},
+				milestones: [],
+				users:[],
+				statuses:[],
+				customFields:[],
+				selectedSpace:null,
+				tags:[],
+				epics: {},
+				lastCompletedUpdateDate: '2006-01-01',
+				mostRecentUpdateDate: null
+			}
+		}).then(function() {
+			if (!vm.data.selectedSpace ) {
+				var p = updateRelatedEntities({
+					spaces:true,milestones:true,users:true,tags:true,customFields:true,statuses:true
+				});
+			} else {
+				var p = $q.when('');
+			}
+			p.then(function() {
 				getUpdatedTickets(vm.data.lastCompletedUpdateDate).success(function(data) {
 					vm.data.lastCompletedUpdateDate = new Date();
 					vm.data.mostRecentUpdateDate = null;
+					if (vm.options.currentSortColumn) sort;
 				});
-			});
-			// get upcoming milestones
-			as.getMilestones({spaceId: vm.selectedSpace.id,per_page:100}).success(function(data) {
-				vm.milestones = data;
-				vm.milestones.forEach(function(milestone, idx) {
-					vm.milestones[idx].initials = getInitials(milestone.title);
-				});
-				// get past milestones
-				as.getMilestones({spaceId: vm.selectedSpace.id, 
-												type: 'completed',
-												parms: {due_date_order:"DESC"}
-											}).success(function(data) {
-					var found = data.some(function(milestone) { 
-						return milestone.id == vm.options.currentMilestone;
-					});
-					//if (found) selectMilestone();
-					data.forEach(function(item) { 
-						item.initials = getInitials(item.title);
-						vm.milestones.unshift(item);
-					});
-				});
-			});
-			var qObj = {spaceId: vm.selectedSpace.id, parms: {per_page: 100}};
-			as.getRoles(qObj).success(function(data){
-				var roles = data;
-				vm.users = []
-				roles.forEach(function(role) {
-					var qObj = {userId: role.user_id};
-					as.getUser(qObj).success(function(data) {
-						user = data;
-						user.role = role;
-						user.initials = getUserInitials(user);
-						vm.users.push(user);
-					});
-				});
-			});
-			as.getTags(qObj).success(function(data){
-				vm.tags = data;
-			});
-			as.getStatuses(qObj).success(function(data) {
-				vm.statuses = data;
-			});
-			as.getCustomFields(qObj).success(function(data) {
-				vm.customFields = data;
 			});
 		});
+		// get upcoming milestones
+	}
+	
+	function updateRelatedEntities(updateObj) {
+		if (updateObj.spaces) {
+			updateObj.spaces = 'fetching...'
+			var p = getSelectedSpace();
+		} else {
+			var p = $q.when('');
+		}
 		
+		p.then(function() {
+			if (updateObj.spaces == vm._fetchingText) {
+				updateObj.spaces = vm_successText;
+				$timeout(function() { updateObj.spaces=false },1000);
+			}
+			
+			var tasks = [
+				{prop:'milestones',func:getMilestones},
+				{prop:'users',func:getUsers},
+				{prop:'tags',func:getTags},
+				{prop:'customFields',func:getCustomFields},
+				{prop:'statuses',func:getStatuses}
+			]
+			
+			tasks.forEach(function(task) {
+				if (updateObj[task.prop]) {
+					updateObj[task.prop] = vm._fetchingText;
+					task.func().then(function() {
+						updateObj[task.prop] = vm._successText;
+						$timeout(function() { updateObj[task.prop]=false },1000);
+					},function(err) {
+						console.dir(err);
+						updateObj[task.prop] = vm._failureText;
+						$timeout(function() { updateObj[task.prop]=false },1000);
+					});
+				}
+			});	
+		});
+	}
+	function getSelectedSpace() {
+		return as.getSpaces().then(function(data) {
+			vm.data.selectedSpace=data.data[0];
+		});
+	}
+	function getMilestones() {
+		return as.getMilestones({spaceId: vm.data.selectedSpace.id,per_page:100}).success(function(data) {
+			vm.data.milestones = data;
+			vm.data.milestones.forEach(function(milestone, idx) {
+				vm.data.milestones[idx].initials = getInitials(milestone.title);
+			});
+			// get past milestones
+			return as.getMilestones({spaceId: vm.data.selectedSpace.id, 
+											type: 'completed',
+											parms: {due_date_order:"DESC"}
+										}).success(function(data) {
+				//if (found) selectMilestone();
+				data.forEach(function(item) { 
+					item.initials = getInitials(item.title);
+					vm.data.milestones.unshift(item);
+				});
+				return vm.data.milestones;
+			});
+		});
+	}
+	function getUsers() {
+		var qObj = {spaceId: vm.data.selectedSpace.id, parms: {per_page: 100}};
+		return as.getRoles(qObj).success(function(data){
+			var roles = data;
+			vm.data.users = []
+			var promises = roles.map(function(role) {
+				var qObj = {userId: role.user_id};
+				return as.getUser(qObj).success(function(data) {
+					user = data;
+					user.role = role;
+					user.initials = getUserInitials(user);
+					vm.data.users.push(user);
+					return user;
+				});
+			});
+			return $q.all(promises);
+		}); 
+	}
+	function getTags() {
+		var qObj = {spaceId: vm.data.selectedSpace.id, parms: {per_page: 100}};
+		return as.getTags(qObj).success(function(data){
+			vm.data.tags = data;
+		});
+	}
+	function getStatuses() {	
+		var qObj = {spaceId: vm.data.selectedSpace.id, parms: {per_page: 100}};
+		return as.getStatuses(qObj).success(function(data) {
+			vm.data.statuses = data;
+		});
+	}
+	function getCustomFields() {	
+		var qObj = {spaceId: vm.data.selectedSpace.id, parms: {per_page: 100}};
+		return as.getCustomFields(qObj).success(function(data) {
+			vm.data.customFields = data;
+		});
 	}
 
 	function toggle(obj, prop, event ) {
@@ -476,21 +580,54 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		return (ticket.parsed.T && ticket.parsed.L && (ticket.parsed.TD || ticket.parsed.FD || ticket.parsed.D));
 	}
 
+	function updateTickets(tickets,prop,newVal) {
+		tickets = tickets || [];
+		var oldVal;
+		tickets.forEach(function(ticket) {
+			getValueByPropPath(prop,ticket,newVal);
+			if (oldVal==newVal) return $q.when(ticket);
+			var idx = vm.data.tickets.indexOf(ticket);
+			updateTicket(ticket,prop,newVal,oldVal)
+				.then(function() {
+					//selectedTickets.splice(selectedTickets.indexOf(ticket),1);
+				},function(err) {
+					ticket.updateFailure=true;
+					$timeout(function() {
+						delete ticket.updateSuccess;
+					},1000);
+					//selectedTickets.splice(selectedTickets.indexOf(ticket),1);
+				});	
+		});
+		
+	}
+	
 	function updateTicket(ticket, propName, propValue, oldValue) {
 		var uData = {};
 		initPropPath(uData,propName,propValue);
 		//uData[propName]=propValue;
 		
-		as.updateTicket({
-			spaceId: vm.selectedSpace.id,
+		return as.updateTicket({
+			spaceId: vm.data.selectedSpace.id,
 			ticketNumber: ticket.number,
 			data: uData
 		}).success(function(data) {
-			updateCount(propName,ticket,propValue,oldValue)
-			setValueByPropPath(propName,ticket,propValue);
+			var newTicket = angular.copy(ticket);
+			setValueByPropPath(propName,newTicket,propValue);
+			addOrUpdateTicket(newTicket); // push through addOrUpdateTicket so that proper counting prop counting and maint can happen
+			newTicket.updateSuccess=true;
+			$timeout(function() {
+				delete newTicket.updateSuccess;
+			},1000);
+			return newTicket;
 		}).error(function(err) {
 			console.dir(err);
 			setValueByPropPath(propName,ticket,oldValue);
+			ticket.updateFailure=true;
+			$timeout(function() {
+				delete ticket.updateSuccess;
+			},1000);
+
+			return err
 		});
 	}
 	
@@ -516,25 +653,25 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		
 		if (oldTicket) {
 			var udpateHidden = !vm.showCompletedMilestones 
-													&& getFromList(oldTicket.milestone_id,vm.milestones,'id','is_completed');
+													&& getFromList(oldTicket.milestone_id,vm.data.milestones,'id','is_completed');
 			if (updateHidden) { // remove from counts
 				updateTicketCount(oldTicket,vm.data.hiddenTicketCount,true);
-				vm.data.hiddenTickets.splice(index,1);
+				//vm.data.hiddenTickets.splice(index,1);
 			} else {
 				updateTicketCount(oldTicket,vm.data.ticketCount,true);
-				vm.data.tickets.splice(index,1);
+				//vm.data.tickets.splice(index,1);
 			}
 		}
-
-		var isCompleted = getFromList(ticket.milestone_id,vm.milestones,'id','is_completed');
+		var isCompleted = getFromList(ticket.milestone_id,vm.data.milestones,'id','is_completed');
 		var updateHidden = !vm.showCompletedMilestones && isCompleted
 		if (updateHidden) {
-			vm.data.hiddenTickets.push(ticket);
+			if (!oldTicket) vm.data.hiddenTickets.push(ticket);
 			updateTicketCount(ticket,vm.data.hiddenTicketCount);
 		} else {
-			vm.data.tickets.push(ticket);
+			if (!oldTicket) vm.data.tickets.push(ticket);
 			updateTicketCount(ticket,vm.data.ticketCount);
 		}
+		if (oldTicket) angular.merge(oldTicket,ticket);
 	}
 	
 	function resetCounts(tickets, ticketCount) {
@@ -553,7 +690,7 @@ function assemblaControllerFunction($http, $scope, $filter,$timeout, as, aos, $l
 		lastUpdatedDate = lastUpdatedDate || new Date('2006-01-01')
 		vm. ticketsDownloading = true;
 		return as.getUpdatedTickets({
-			spaceId: vm.selectedSpace.id,
+			spaceId: vm.data.selectedSpace.id,
 			parms: {
 				per_page: 50,
 				page: 1,
