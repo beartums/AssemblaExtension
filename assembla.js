@@ -345,8 +345,9 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aos
 	}
 	
 	function addToFilter(propName,id) {
-		var filter = initPropPath(vm.options.filters,propName,{})
+		var filter = initPropPath(vm.options.filters,propName,{});
 		filter[id] = !filter[id];
+		vm.optionChange();
 	}
 	
 	function filterTickets(ticket,idx) {

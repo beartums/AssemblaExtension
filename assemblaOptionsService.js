@@ -74,7 +74,8 @@ angular.module("assembla")
 				purgeBeforeDate: $filter('date')(aos.options.purgeBeforeDate,'yyyy-MM-dd'),
 				loadAllTickets: aos.options.loadAllTickets,
 				purgeOpenTickets: aos.options.purgeOpenTickets,
-				mentionWatchInterval: aos.options.mentionWatchInterval
+				mentionWatchInterval: aos.options.mentionWatchInterval,
+				filters: aos.options.filters
       }, function() {
         // Update status to let user know options were saved.
         aos.status.msg = 'Options saved.';
@@ -106,7 +107,8 @@ angular.module("assembla")
 				purgeOpenTickets: false,
 				purgeBeforeDate: '2012-01-01',
 				loadAllTickets: false,
-				mentionWatchInterval: '600000'
+				mentionWatchInterval: '600000',
+				filters: {}
       }, function(items) {
         aos.options.itemsPerPage = items.itemsPerPage;
         aos.options.currentPage = items.currentPage;
@@ -122,6 +124,7 @@ angular.module("assembla")
         aos.options.purgeBeforeDate = items.purgeBeforeDate;
         aos.options.loadAllTickets = items.loadAllTickets;
         aos.options.purgeOpenTickets = items.purgeOpenTickets;
+				aos.options.filters = items.filters;
         $rootScope.$apply();
 				if (readyHandler && !isReady) readyHandler();
 				isReady = true;

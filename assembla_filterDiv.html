@@ -28,10 +28,10 @@
 					title="{{u.name}} ({{u.role.role}})"
 					ng-click="vm.addToFilter('user',u.id)">
 						<td>
-							{{u.login}}
+							{{::u.login}}
 						</td>
-						<td class="text-right">
-							<span class="badge pull-right" ng-if="vm.data.ticketCount.assigned_to_id[u.id] && vm.data.ticketCount.assigned_to_id[u.id].length>0">
+						<td class="">
+							<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[u.id] && vm.data.ticketCount.assigned_to_id[u.id].length>0">
 								{{!vm.data.ticketCount.assigned_to_id[u.id].length ? 0 : vm.data.ticketCount.assigned_to_id[u.id].length}}
 							</span>
 						</td>
@@ -40,9 +40,9 @@
 							ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[vm._unassigned] || vm.data.ticketCount.assigned_to_id[vm._unassigned].length==0)"
 							ng-click="vm.addToFilter('user',vm._unassigned)">
 					<td>
-						{{vm._unassigned}}
+						{{::vm._unassigned}}
 					</td>
-					<td class="text-right">
+					<td class="">
 						<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[vm._unassigned] && vm.data.ticketCount.assigned_to_id[vm._unassigned].length>0">
 							{{!vm.data.ticketCount.assigned_to_id[vm._unassigned].length ? 0 : vm.data.ticketCount.assigned_to_id[vm._unassigned].length}}
 						</span>
@@ -65,7 +65,7 @@
 						ng-class="{active:vm.options.filters.status[s.name]}"
 						ng-click="vm.addToFilter('status',s.name)">
 							<td>
-								{{s.name}}
+								{{::s.name}}
 							</td>
 							<td>
 								<span class="badge" ng-if="vm.data.ticketCount.status[s.name] && vm.data.ticketCount.status[s.name].length>0">
@@ -90,7 +90,7 @@
 							ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
 							ng-click="vm.addToFilter('milestone',m.id)">
 						<td>
-							{{m.title}}
+							{{::m.title}}
 						</td>
 						<td>
 							<span class="badge" ng-if="vm.data.ticketCount.milestone_id[m.id] && vm.data.ticketCount.milestone_id[m.id].length>0">
@@ -102,7 +102,7 @@
 							ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
 							ng-click="vm.addToFilter('milestone',vm._unassigned)">
 							<td>
-								{{vm._unassigned}}
+								{{::vm._unassigned}}
 							</td>
 							<td>
 								<span class="badge" ng-if="vm.data.ticketCount.assigned_to_id[vm._unassigned] && vm.data.ticketCount.assigned_to_id[vm._unassigned].length>0">
@@ -126,7 +126,7 @@
 							ng-class="{active:vm.options.filters.custom_fields[cf.title][v]}"
 							ng-click="vm.addToFilter('custom_fields.' + cf.title,v)">
 							<td>
-								{{v}}
+								{{::v}}
 							</td>
 							<td>
 								<span class="badge">{{list.length}}</span>
@@ -156,6 +156,11 @@
 		</div>
 	</span>
 		&nbsp; &nbsp;
+	<span>
+		<button type="button" title="Clear all filters" ng-click="vm.options.filters={}; vm.optionChange()" class="close">
+			<span>&times;</span>
+		</button>
+	</span
 	
 </div>
 					

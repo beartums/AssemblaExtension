@@ -195,18 +195,18 @@
 										<td data-ng-click="vm.toggle(t,'expanded')">
 											<span class="glyphicon" data-ng-class="{'glyphicon-minus':t.expanded, 'glyphicon-plus':!t.expanded}"></span>
 										</td>
-										<td class="text-center" >{{t.number}}</td>
+										<td class="text-center" >{{::t.number}}</td>
 										<td>
 											<span class="fa fa-edit hover-icon"
 													ng-style="{'color':vm.selectedTickets.indexOf(t)>-1?'green':'lightgrey'}"
 													ng-click="vm.toggleTicketSelected(t)" >
 											</span>
 										</td>
-										<td title="{{t.summary}}">{{vm.abbreviate(t.summary,30,20)}}</td>
+										<td title="{{::t.summary}}">{{::vm.abbreviate(t.summary,30,20)}}</td>
 										<td>
 													{{t.status}}
 										</td>
-										<td>{{t.created_on | date:'dd MMM yy'}}</td>
+										<td>{{::t.created_on | date:'dd MMM yy'}}</td>
 										<td title="{{vm.getFromList(t.assigned_to_id,vm.data.users,'id','login')}}">
 													{{vm.getFromList(t.assigned_to_id,vm.data.users,'id','initials') || '--'}}
 										</td>
