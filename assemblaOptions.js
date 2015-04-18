@@ -6,16 +6,16 @@ angular.module("assembla")
       vm.status = aos.status;
       vm.options = aos.options;
 			vm.change = aos.saveOptions;
-			
-			function change() {
-				console.dir(vm.options);
-				console.dir(aos.options);
-			}
 
 			function init() {
 				vm.status = aos.status;
 				vm.options=aos.options;
 			}
+			function toggle(obj,prop) {
+				obj[prop] = !obj[prop];
+				vm.change()
+			}
+			
       return vm
     }
   ]);

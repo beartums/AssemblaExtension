@@ -75,7 +75,8 @@ angular.module("assembla")
 				loadAllTickets: aos.options.loadAllTickets,
 				purgeOpenTickets: aos.options.purgeOpenTickets,
 				mentionWatchInterval: aos.options.mentionWatchInterval,
-				filters: aos.options.filters
+				filters: aos.options.filters,
+				filters: aos.options.hiddenColumns
       }, function() {
         // Update status to let user know options were saved.
         aos.status.msg = 'Options saved.';
@@ -108,7 +109,8 @@ angular.module("assembla")
 				purgeBeforeDate: '2012-01-01',
 				loadAllTickets: false,
 				mentionWatchInterval: '600000',
-				filters: {}
+				filters: {},
+				hiddenColumns: {}
       }, function(items) {
         aos.options.itemsPerPage = items.itemsPerPage;
         aos.options.currentPage = items.currentPage;
@@ -125,6 +127,7 @@ angular.module("assembla")
         aos.options.loadAllTickets = items.loadAllTickets;
         aos.options.purgeOpenTickets = items.purgeOpenTickets;
 				aos.options.filters = items.filters;
+				aos.options.hiddenColumns = items.hiddenColumns;
         $rootScope.$apply();
 				if (readyHandler && !isReady) readyHandler();
 				isReady = true;

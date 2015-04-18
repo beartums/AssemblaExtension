@@ -400,6 +400,7 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aos
 		$lf.bind($scope, {
 			key: 'vm.data',
 			defaultValue: {
+				selectedSpace:null,
 				tickets: [],
 				ticketCount: {},
 				hiddenTickets: [],
@@ -408,13 +409,26 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aos
 				users:[],
 				statuses:[],
 				customFields:[],
-				selectedSpace:null,
 				tags:[],
 				epics: {},
 				lastCompletedUpdateDate: '2006-01-01',
-				mostRecentUpdateDate: null
+				mostRecentUpdateDate: null,
+				options: {
+					hiddenColumns: {Dev:false, Status:false, Milestone:false, QA:false, "QA By":false, "Desc?":false, Created:false},
+					hiddenFilters: {Dev:false, Status:false, Milestone:false, QA:false, "QA By":false, "Desc?":false, Created:false},
+					summaryOptions: {
+						isTruncated: true,
+						startLength: 30,
+						endLength: 20
+					}
+				}
 			}
 		}).then(function() {
+			vm.data.options = vm.data.options || {}
+			vm.data.options.hiddenFilters = vm.data.options.hiddenFilters
+						|| {Dev:false, Status:false, Milestone:false, QA:false, "QA By":false, Created:false}
+			vm.data.options.hiddenColumns = vm.data.options.hiddenColumns
+						|| {Dev:false, Status:false, Milestone:false, QA:false, "QA By":false, "Desc?":false, Created:false}
 			if (!vm.data.selectedSpace ) {
 				var p = updateRelatedEntities({
 					spaces:true,milestones:true,users:true,tags:true,customFields:true,statuses:true
