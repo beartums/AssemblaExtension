@@ -54,6 +54,7 @@ function getMentions() {
 	
 	return $.ajax(url,configObj).done(function(data) {
 		userMentions = [];
+		if (!data) data=[];
 		data.forEach(function(mention) {
 			userMentions.push(mention);
 			var user = users[mention.author_id]
@@ -64,6 +65,7 @@ function getMentions() {
 		chrome.browserAction.setBadgeText({text: !userMentions || userMentions.length==0 ? '0' : userMentions.length.toString()});
 		var color = userMentions.length==0 ? '#A8A8A8' : '#FF0000'
 		chrome.browserAction.setBadgeBackgroundColor({'color':color});
+		return data;
 	}).fail(function (err) {
 		chrome.browserAction.setBadgeText({text:"?!"});
 		var color =  '#FF0000'
@@ -88,6 +90,24 @@ function getUser(id) {
 	});
 }
 
+function markMentionRead(id) {
+	var url =  "https://api.assembla.com/v1/user/mentions/" + id +
+				"/mark_as_read.json"
+	headers = {
+		'X-api-key': options.key,
+		'X-api-secret': options.secret
+	}
+	var configObj = {
+		"headers": headers,
+		"method": "PUT"
+	}
+	return $.ajax(url,configObj).done(function(data) {
+		console.dir(data);
+		return getMentions();
+	}).fail(function(err) {
+		console.dir(err);
+	});
+}
 
 function cancelInterval() {
 	clearInterval(intervalFunc);

@@ -17,7 +17,7 @@
 			</span>
 			<div class="dropdown-menu">
 				<table class="table table-hover table-compressed">
-				<tr ng-repeat="u in vm.data.users"
+				<tr ng-repeat="(id,u) in vm.data.users"
 					ng-if="u.role.role!='watcher' || u.role.status==2"
 					ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[u.id] || vm.data.ticketCount.assigned_to_id[u.id].length==0)"
 					title="{{u.name}} ({{u.role.role}})"
@@ -64,7 +64,7 @@
 			</span>
 			<div class="dropdown-menu">
 				<table class="table table-compressed table-hover">
-					<tr ng-repeat="m in vm.data.milestones"
+					<tr ng-repeat="(id,m) in vm.data.milestones"
 							ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
 							ng-click="vm.updateTickets(vm.selectedTickets,'milestone_id',m.id)">
 						<td>
@@ -82,7 +82,7 @@
 		</span>
 		&nbsp; &nbsp;
 		
-		<span class="dropdown" dropdown id="milestoneUpdate">
+		<span class="dropdown" dropdown id="qabugUpdate">
 			<span class="hover-btn dropdown-toggle" dropdown-toggle>
 				Bug
 				<span class="caret"></span>
@@ -100,7 +100,7 @@
 		</span>
 		&nbsp; &nbsp;
 		
-		<span class="dropdown" dropdown id="milestoneUpdate">
+		<span class="dropdown" dropdown id="qaUpdate">
 			<span class="hover-btn dropdown-toggle" dropdown-toggle>
 				Assign QA
 				<span class="caret"></span>
@@ -118,7 +118,7 @@
 		</span>
 		&nbsp; &nbsp;
 		
-		<span class="dropdown" dropdown id="milestoneUpdate">
+		<span class="dropdown" dropdown id="componentUpdate">
 			<span class="hover-btn dropdown-toggle" dropdown-toggle>
 				Component
 				<span class="caret"></span>

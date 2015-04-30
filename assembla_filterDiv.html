@@ -12,16 +12,15 @@
 		</div>
 	</div>
 	<div class="col-md-9 text-right" 
-			style="position: relative; height:27px; top:4px; 
-						"
-		<span ng-if="!vm.data.options.hiddenFilters['Dev']" class="dropdown" dropdown id="devFilter">
+			style="position: relative; height:27px; top:4px;">
+		<span ng-if="!vm.options.hiddenFilters['Dev']" class="dropdown" dropdown id="devFilter">
 			<span class="hover-btn dropdown-toggle" dropdown-toggle>
 				Dev
 				<span class="caret"></span>
 			</span>
 			<div class="dropdown-menu">
 				<table class="table table-hover table-compressed">
-				<tr class="" prevent-default ng-repeat="u in vm.data.users"
+				<tr class="" prevent-default ng-repeat="(id,u) in vm.data.users"
 					ng-if="u.role.role!='watcher' || u.role.status==2"
 					ng-class="{active:vm.options.filters.user[u.id]}"
 					ng-hide="!vm.showInactiveUsers && (!vm.data.ticketCount.assigned_to_id[u.id] || vm.data.ticketCount.assigned_to_id[u.id].length==0)"
@@ -54,7 +53,7 @@
 		</span>
 
 		
-		<span ng-if="!vm.data.options.hiddenFilters['Status']" class="dropdown" dropdown id="statusFilter">
+		<span ng-if="!vm.options.hiddenFilters['Status']" class="dropdown" dropdown id="statusFilter">
 			<span class="hover-btn dropdown-toggle" dropdown-toggle>
 				Status
 				<span class="caret"></span>
@@ -80,14 +79,14 @@
 		</span>
 
 
-		<span ng-if="!vm.data.options.hiddenFilters['Milestone']" class="dropdown" dropdown id="milestoneFilter">
+		<span ng-if="!vm.options.hiddenFilters['Milestone']" class="dropdown" dropdown id="milestoneFilter">
 			<span class="hover-btn dropdown-toggle" dropdown-toggle>
 				Milestones
 				<span class="caret"></span>
 			</span>
 			<div class="dropdown-menu">
 				<table class="table table-compressed table-hover">
-					<tr ng-repeat="m in vm.data.milestones" prevent-default
+					<tr ng-repeat="(id,m) in vm.data.milestones" prevent-default
 							ng-class="{active:vm.options.filters.milestone[m.id]}"
 							ng-hide="!vm.showCompletedMilestones && m.is_completed==1"
 							ng-click="vm.addToFilter('milestone',m.id)">
@@ -118,7 +117,7 @@
 		</span>
 		
 		<span class="dropdown" dropdown ng-repeat="cf in vm.data.customFields"
-				ng-if="cf.title!='Due Date' && !vm.data.options.hiddenFilters[cf.title=='QA Assigned Person'?'QA By':cf.title]">
+				ng-if="cf.title!='Due Date' && !vm.options.hiddenFilters[cf.title=='QA Assigned Person'?'QA By':cf.title]">
 				<span class="hover-btn dropdown-toggle" dropdown-toggle>
 					{{cf.title=='QA Assigned Person'?'QA By':cf.title}}
 					<span class="caret"></span>
@@ -140,7 +139,7 @@
 			&nbsp; &nbsp;
 		</span>
 
-	<span ng-if="!vm.data.options.hiddenFilters['Created']" class="dropdown" dropdown id="createdFilter">
+	<span ng-if="!vm.options.hiddenFilters['Created']" class="dropdown" dropdown id="createdFilter">
 		<span class="hover-btn dropdown-toggle" dropdown-toggle>
 		Created
 			<span class="caret"></span>
@@ -148,7 +147,22 @@
 		<div class="dropdown-menu" >
 			 <div style="display:inline-block; min-height:290px;">
 					<datepicker ng-model="vm.createdSince" prevent-default 
-					ng-change="vm.createdSinceFilterChange()"
+					ng-change="vm.addToFilter('created_on',vm.createdSince)"
+					show-weeks="false" class="well well-sm"></datepicker>
+			</div>
+		</div>
+		&nbsp; &nbsp;
+	</span>
+
+	<span ng-if="!vm.options.hiddenFilters['Updated']" class="dropdown" dropdown id="updatedFilter">
+		<span class="hover-btn dropdown-toggle" dropdown-toggle>
+		Updated
+			<span class="caret"></span>
+		</span>
+		<div class="dropdown-menu" >
+			 <div style="display:inline-block; min-height:290px;">
+					<datepicker prevent-default ng-model="vm.updatedSince"
+					ng-change="vm.addToFilter('updated_at',vm.updatedSince)"
 					show-weeks="false" class="well well-sm"></datepicker>
 			</div>
 		</div>
@@ -159,11 +173,11 @@
 		<span class="dropdown-toggle" dropdown-toggle>
 			<span class="fa fa-gear hover-icon" title="Choose filters to show/hide"></span>
 		</span>
-		<div class="dropdown-menu list-group" style="left:-300px; width:400px">
+		<div class="dropdown-menu list-group" style="left:-300px; width:500px">
 				&nbsp;
-				<span ng-repeat="(ck,isHidden) in vm.data.options.hiddenFilters"> 
+				<span ng-repeat="(ck,isHidden) in vm.options.hiddenFilters"> 
 						<span class="label" prevent-default	ng-class="{'label-success':!isHidden,'label-default':isHidden}"
-						ng-click="vm.data.options.hiddenFilters[ck]=!vm.data.options.hiddenFilters[ck]" >
+						ng-click="vm.options.hiddenFilters[ck]=!vm.options.hiddenFilters[ck];vm.optionChange();" >
 							{{ck}}
 						</span>
 						&nbsp;

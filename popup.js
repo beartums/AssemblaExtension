@@ -34,9 +34,9 @@ angular.module("assembla")
 		}
 	})
 
-	.controller("popupController", ['assemblaService','assemblaOptionsService','$window',popupControllerFunction]);
+	.controller("popupController", ['assemblaService','assemblaOptionsService','$window', '$scope', popupControllerFunction]);
 	
-	function popupControllerFunction(as,aos,$window) {
+	function popupControllerFunction(as,aos,$window,$scope) {
 		
 		var pu = this;
 		pu.bgPage = chrome.extension.getBackgroundPage();
@@ -52,10 +52,10 @@ angular.module("assembla")
 		}
 		
 		function markAsRead(mention) {
-			as.markMentionAsRead({mentionId:mention.id
-			}).success(function(data) {
-				var idx = pu.bgPage.getMentions();
-			})
+			pu.bgPage.markMentionRead(mention.id).done(function(data) {
+				pu.bgPage.userMentions.splice(pu.bgPage.userMentions.indexOf(mention),1);
+				$scope.$apply();
+			});
 		}
 		
 		

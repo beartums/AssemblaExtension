@@ -28,9 +28,10 @@
 				</div>
 				<br/>
 				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<button class="btn btn-default" ng-click="vm.resetCounts()"
-							title="recalculate how many of each type of ticket">Update Ticket Counts</button>
+					<div class="col-md-10 col-md-offset-2">
+						<span class="btn btn-default" ng-click="vm.resetCounts()"
+							title="recalculate how many of each type of ticket">Update Ticket Counts</span>
+						<strong><span class='fa fa-check text-success' ng-if="vm.resetSuccess"></span></strong>
 					</div>
 				</div>
 				<br />
@@ -183,66 +184,72 @@
 										<th>
 											Summary
 											&nbsp;
-											<span class="dropdown" dropdown id="filterSettings">
+											<span class="dropdown" dropdown id="summarySettings">
 												<span class="dropdown-toggle" dropdown-toggle>
 													<span class="fa fa-gear hover-icon" title="Set summary abbreviation options"></span>
 												</span>
 												<div class="dropdown-menu list-group" style="left:-50px;"
-														ng-style="{'width':vm.data.options.summaryOptions.isTruncated?300:100}">
+														ng-style="{'width':vm.options.summaryOptions.isTruncated?300:100}">
 														<form class="form form-inline" prevent-default> 
 																<label>&nbsp; &nbsp; Abbreviate: </label>
 																<strong><span prevent-default	class="fa fa-2x" style="position: relative;top:4px;"
-																	ng-class="{'fa-toggle-on':vm.data.options.summaryOptions.isTruncated,
-																						'fa-toggle-off':!vm.data.options.summaryOptions.isTruncated,
-																						'text-success':vm.data.options.summaryOptions.isTruncated,
-																						'text-muted':!vm.data.options.summaryOptions.isTruncated}"
-																		ng-click="vm.data.options.summaryOptions.isTruncated=!vm.data.options.summaryOptions.isTruncated" >
+																	ng-class="{'fa-toggle-on':vm.options.summaryOptions.isTruncated,
+																						'fa-toggle-off':!vm.options.summaryOptions.isTruncated,
+																						'text-success':vm.options.summaryOptions.isTruncated,
+																						'text-muted':!vm.options.summaryOptions.isTruncated}"
+																		ng-click="vm.options.summaryOptions.isTruncated=!vm.options.summaryOptions.isTruncated" >
 																</span></strong>
 																&nbsp;
 																<input type="number" style="width:60px" title="Number of characters before the ellipsis"
 																	ng-model-options="{debounce:500}"
-																	ng-if="vm.data.options.summaryOptions.isTruncated"
-																	ng-model="vm.data.options.summaryOptions.startLength">
+																	ng-if="vm.options.summaryOptions.isTruncated"
+																	ng-model="vm.options.summaryOptions.startLength">
 																<input type="number" style="width:60px" title="Number of characters after the ellipsis"
 																	ng-model-options="{debounce:500}"
-																	ng-if="vm.data.options.summaryOptions.isTruncated"
-																	ng-model="vm.data.options.summaryOptions.endLength">
+																	ng-if="vm.options.summaryOptions.isTruncated"
+																	ng-model="vm.options.summaryOptions.endLength">
 														</span>
 												</div>		
 											</span>
 
 										</th>
-										<th ng-if="!vm.data.options.hiddenColumns['Status']" ng-click="vm.sort('status')">
+										<th ng-if="!vm.options.hiddenColumns['Status']" ng-click="vm.sort('status')">
 											Status <span class="text-muted" ng-class="vm.sortClasses['status']"></span>
 										</th>
-										<th ng-if="!vm.data.options.hiddenColumns['Created']" ng-click="vm.sort('created_on')">
+										<th ng-if="!vm.options.hiddenColumns['Created']" ng-click="vm.sort('created_on')">
 											Created <span class="text-muted" ng-class="vm.sortClasses['created_on']"></span>
 										</th>
-										<th ng-if="!vm.data.options.hiddenColumns['Dev']" ng-click="vm.sort('assigned_to_id')">
+										<th ng-if="!vm.options.hiddenColumns['Updated']" ng-click="vm.sort('updated_at')">
+											Updated <span class="text-muted" ng-class="vm.sortClasses['updated_at']"></span>
+										</th>
+										<th ng-if="!vm.options.hiddenColumns['Dev']" ng-click="vm.sort('assigned_to_id')">
 											Dev <span class="text-muted" ng-class="vm.sortClasses['assigned_to_id']"></span>
 										</th>
-										<th ng-if="!vm.data.options.hiddenColumns['Milestone']" ng-click="vm.sort('milestone')">
-											Milestone <span class="text-muted" ng-class="vm.sortClasses['milestone']"></span>
+										<th ng-if="!vm.options.hiddenColumns['Milestone']" ng-click="vm.sort('milestone')">
+											M'stone <span class="text-muted" ng-class="vm.sortClasses['milestone']"></span>
 										</th>
-										<th ng-if="!vm.data.options.hiddenColumns['QA By']" ng-click="vm.sort('custom_fields.QA Assigned Person')">
-											QA By <span class="text-muted" ng-class="vm.sortClasses['custom_fields.QA Assigned Person']"></span>
+										<th ng-if="!vm.options.hiddenColumns['QA By']" ng-click="vm.sort('custom_fields.QA Assigned Person')">
+											QA&nbsp;By <span class="text-muted" ng-class="vm.sortClasses['custom_fields.QA Assigned Person']"></span>
 										</th>
-										<th ng-if="!vm.data.options.hiddenColumns['QA']" ng-click="vm.sort('custom_fields.QA')">
+										<th ng-if="!vm.options.hiddenColumns['QA']" ng-click="vm.sort('custom_fields.QA')">
 											QA <span class="text-muted" ng-class="vm.sortClasses['custom_fields.QA']"></span>
 										</th>
-										<th ng-if="!vm.data.options.hiddenColumns['Desc?']">
+										<th ng-if="!vm.options.hiddenColumns['Component']" ng-click="vm.sort('custom_fields.Component')">
+											Component <span class="text-muted" ng-class="vm.sortClasses['custom_fields.Component']"></span>
+										</th>
+										<th ng-if="!vm.options.hiddenColumns['Desc?']">
 											Desc?
 										</th>
 										<th>
-											<span class="dropdown" dropdown id="filterSettings">
+											<span class="dropdown" dropdown id="columnSettings">
 												<span class="dropdown-toggle" dropdown-toggle>
 													<span class="fa fa-gear hover-icon" title="Choose columns to show/hide"></span>
 												</span>
-												<div class="dropdown-menu list-group" style="left:-300px; width:400px">
+												<div class="dropdown-menu list-group text-center" style="left:-300px; width:550px">
 														&nbsp;
-														<span ng-repeat="(ck,isHidden) in vm.data.options.hiddenColumns"> 
+														<span ng-repeat="(ck,isHidden) in vm.options.hiddenColumns"> 
 																<span class="label" prevent-default	ng-class="{'label-success':!isHidden,'label-default':isHidden}"
-																ng-click="vm.data.options.hiddenColumns[ck]=!vm.data.options.hiddenColumns[ck]" >
+																ng-click="vm.options.hiddenColumns[ck]=!vm.options.hiddenColumns[ck]; vm.optionChange()" >
 																	{{ck}}
 																</span>
 																&nbsp;
@@ -267,38 +274,57 @@
 													ng-click="vm.toggleTicketSelected(t)" >
 											</span>
 										</td>
-										<td ng-if="vm.data.options.summaryOptions.isTruncated" title="{{::t.summary}}">
+										<td ng-if="vm.options.summaryOptions.isTruncated" title="{{::t.summary}}">
 											{{::vm.abbreviate(t.summary,
-														vm.data.options.summaryOptions.startLength,vm.data.options.summaryOptions.endLength)}}
+														vm.options.summaryOptions.startLength,vm.options.summaryOptions.endLength)}}
 										</td>
-										<td ng-if="!vm.data.options.summaryOptions.isTruncated">
+										<td ng-if="!vm.options.summaryOptions.isTruncated">
 											{{::t.summary}}
 										</td>
-										<td ng-if="!vm.data.options.hiddenColumns['Status']">
+										<td ng-if="!vm.options.hiddenColumns['Status']">
 													{{t.status}}
 										</td>
-										<td ng-if="!vm.data.options.hiddenColumns['Created']"  style="min-width:85px">
-											{{::t.created_on | date:'dd MMM yy'}}
+										<td ng-if="!vm.options.hiddenColumns['Created']">
+											{{::t.created_on | date:'dd&nbsp;MMM&nbsp;yy'}}
 										</td>
-										<td  ng-if="!vm.data.options.hiddenColumns['Dev']"
-												title="{{vm.getFromList(t.assigned_to_id,vm.data.users,'id','login')}}">
-													{{vm.getFromList(t.assigned_to_id,vm.data.users,'id','initials') || '--'}}
+										<td ng-if="!vm.options.hiddenColumns['Updated']">
+											{{::t.updated_at | date:'dd&nbsp;MMM&nbsp;yy'}}
 										</td>
-										<td ng-if="!vm.data.options.hiddenColumns['Milestone']" 
-												title="{{vm.getFromList(t.milestone_id,vm.data.milestones,'id','title')}}">
-													{{vm.getFromList(t.milestone_id,vm.data.milestones,'id','initials') || '--'}}
+										<td  ng-if="!vm.options.hiddenColumns['Dev']"
+												title="{{vm.data.users[t.assigned_to_id].login}}">
+													{{vm.data.users[t.assigned_to_id].initials || '--'}}
 										</td>
-										<td  ng-if="!vm.data.options.hiddenColumns['QA By']"
+										<td ng-if="!vm.options.hiddenColumns['Milestone']" 
+												title="{{vm.data.milestones[t.milestone_id].title}}">
+													{{vm.data.milestones[t.milestone_id].initials || '--'}}
+										</td>
+										<td  ng-if="!vm.options.hiddenColumns['QA By']"
 												title="{{t.custom_fields['QA Assigned Person']}}">
 													{{vm.getInitials(t.custom_fields['QA Assigned Person'] || '--')}}
 										</td>
-										<td ng-if="!vm.data.options.hiddenColumns['QA']">
+										<td ng-if="!vm.options.hiddenColumns['QA']">
 											{{t.custom_fields['QA']}}
 										</td>
-										<td ng-if="!vm.data.options.hiddenColumns['Desc?']" ><span class="glyphicon" data-ng-click="vm.parseDescription(t)"
+										<td ng-if="!vm.options.hiddenColumns['Component']">
+											{{t.custom_fields['Component']}}
+										</td>
+										<td ng-if="!vm.options.hiddenColumns['Desc?']" ><span class="glyphicon" data-ng-click="vm.parseDescription(t)"
 												data-ng-class="{'glyphicon-ok': vm.isValidTicket(t), 'glyphicon-remove': !vm.isValidTicket(t), 
 																		'text-success': vm.isValidTicket(t), 'text-danger': !vm.isValidTicket(t)}">
 												</span>
+										</td>
+										<td>
+											<span class="dropdown" dropdown>
+												<span class="fa fa-comments-o icon-badgeable hover-icon dropdown-toggle" dropdown-toggle 
+													title="Retrieve comments">
+													<span class="icon-badge">{{t.comments.comments.length}}</span>
+												</span>
+												<span class="list-group dropdown-menu">
+													<a href class="list-group-item" ng-click="vm.getComments(t.number)">Refresh Comments</a>
+													<a href class="list-group-item" ng-click="vm.addComment(t.number)">Add a Comment</a>
+													<a href class="list-group-item" ng-click="vm.viewComments(t.number)">View Comments</a>
+												</span>
+											</span>
 										</td>
 									</tr>
 									<tr data-ng-if="t.expanded" data-ng-repeat-end>
@@ -326,7 +352,7 @@
     <script src="ngDirectiveModule.js" charset="utf-8"></script>
     <script src="assembla.js" charset="utf-8"></script>
     <script src="assemblaService.js" charset="utf-8"></script>
-    <script src="assemblaOptionsService.js" charset="utf-8"></script>
+    <script src="assemblaPersistenceService.js" charset="utf-8"></script>
 
   </body>
 </html>
