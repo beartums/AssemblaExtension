@@ -15,123 +15,9 @@
 	<link href="assembla.css" rel="stylesheet" media="screen">
   </head>
   <body data-ng-controller="assemblaController as vm">
-		<div pageslide ps-side="left" ps-open="vm.showTools" ps-auto-close="true" ps-class="panel"  style="background-color:whitesmoke">
-			<div class="container-fluid">
-				<div class="row">
-					<br/>
-					<button type="button" class="close pull-right" ng-click="vm.showTools=!vm.showTools">
-						<span>&times;&nbsp;&nbsp;</span>
-					</button>
-					<div class="col-md-12 text-center">
-						<h2>Tools</h2>
-					</div>
-				</div>
-				<br/>
-				<div class="row">
-					<div class="col-md-10 col-md-offset-2">
-						<span class="btn btn-default" ng-click="vm.resetCounts()"
-							title="recalculate how many of each type of ticket">Update Ticket Counts</span>
-						<strong><span class='fa fa-check text-success' ng-if="vm.resetSuccess"></span></strong>
-					</div>
-				</div>
-				<br />
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<div class="input-group">
-							<input type="date" class="form-control" ng-model="vm.downloadTicketsSince">
-							<div class="input-group-btn">
-								<button class="btn btn-default" 
-											title="Download and add/merge all tickets since the entered date"
-											ng-click="vm.getUpdatedTickets(vm.downloadTicketsSince)">
-									<span class="fa fa-download"></span>
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>				
-				<br/>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<button class="btn btn-default" title="Update the selected reference entities from the API"
-								ng-click="vm.updateRelatedEntities(vm.entityUpdateObj)">
-							Update References
-						</button>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<span>
-							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.spaces || vm.entityUpdateObj.spaces===true"></span>
-							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.spaces==vm._fetchingText"></span>
-							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.spaces==vm._successText"></span>
-							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.spaces==vm._failureText"></span>
-						</span>
-						<input type='checkbox' ng-model="vm.entityUpdateObj.spaces" ng-init="true">
-						Spaces
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<span>
-							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.milestones || vm.entityUpdateObj.milestones===true"></span>
-							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.milestones==vm._fetchingText"></span>
-							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.milestones==vm._successText"></span>
-							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.milestones==vm._failureText"></span>
-						</span>
-						<input type='checkbox' ng-model="vm.entityUpdateObj.milestones" ng-init="true">
-						Milestones
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<span>
-							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.users || vm.entityUpdateObj.users===true"></span>
-							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.users==vm._fetchingText"></span>
-							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.users==vm._successText"></span>
-							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.users==vm._failureText"></span>
-						</span>
-						<input type='checkbox' ng-model="vm.entityUpdateObj.users" ng-init="true">
-						Users
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<span>
-							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.customFields || vm.entityUpdateObj.customFields===true"></span>
-							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.customFields==vm._fetchingText"></span>
-							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.customFields==vm._successText"></span>
-							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.customFields==vm._failureText"></span>
-						</span>
-						<input type='checkbox' ng-model="vm.entityUpdateObj.customFields" ng-init="true">
-						Custom Fields
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<span>
-							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.statuses || vm.entityUpdateObj.statuses===true"></span>
-							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.statuses==vm._fetchingText"></span>
-							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.statuses==vm._successText"></span>
-							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.statuses==vm._failureText"></span>
-						</span>
-						<input type='checkbox' ng-model="vm.entityUpdateObj.statuses" ng-init="true">
-						Statuses
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2">
-						<span>
-							<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.tags || vm.entityUpdateObj.tags===true"></span>
-							<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.tags==vm._fetchingText"></span>
-							<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.tags==vm._successText"></span>
-							<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.tags==vm._failureText"></span>
-						</span>
-						<input type='checkbox' ng-model="vm.entityUpdateObj.tags" ng-init="true">
-						Tags
-					</div>
-				</div>
-				
-			</div>
+		<div pageslide ps-side="left" ps-open="vm.showTools" 
+					ps-auto-close="true" ps-class="panel"  style="background-color:whitesmoke"
+					ng-include="'assembla_toolsDiv.html'">
 		</div>
     <div class="container">
 			<div class="row">
@@ -161,13 +47,14 @@
 						</div>
 						<div class="col-md-3" id="ticketCount">
 							ticket count: 
-							<span data-ng-if="filteredTickets.length!=vm.data.tickets.length">
+							<span data-ng-if="filteredTickets.length!=vm.visibleTicketsCount()">
 								<span class="badge">{{filteredTickets.length}}</span> 
 								of 
 							</span>
-							<span class="badge">{{vm.data.tickets.length}}</span>
+							<span class="badge">{{vm.visibleTicketsCount()}}</span>
 						</div>
 					</div>
+					<!-- Filter/update bar above the table -->
 					<div ng-include="!vm.selectedTickets || vm.selectedTickets.length==0 
 															? 'assembla_filterDiv.html'
 															: 'assembla_updateDiv.html'"></div>
@@ -225,8 +112,8 @@
 										<th ng-if="!vm.options.hiddenColumns['Dev']" ng-click="vm.sort('assigned_to_id')">
 											Dev <span class="text-muted" ng-class="vm.sortClasses['assigned_to_id']"></span>
 										</th>
-										<th ng-if="!vm.options.hiddenColumns['Milestone']" ng-click="vm.sort('milestone')">
-											M'stone <span class="text-muted" ng-class="vm.sortClasses['milestone']"></span>
+										<th ng-if="!vm.options.hiddenColumns['Milestone']" ng-click="vm.sort('milestone')" title="Milestone">
+											MS <span class="text-muted" ng-class="vm.sortClasses['milestone']"></span>
 										</th>
 										<th ng-if="!vm.options.hiddenColumns['QA By']" ng-click="vm.sort('custom_fields.QA Assigned Person')">
 											QA&nbsp;By <span class="text-muted" ng-class="vm.sortClasses['custom_fields.QA Assigned Person']"></span>
@@ -260,12 +147,13 @@
 
 									</tr>
 									<tr ng-class="{'bg-success': t.updateSuccess,'bg-danger': t.updateFailure}"
+											ng-init="vm.page=1"
 											data-ng-repeat-start="t in filteredTickets = (
 											vm.data.tickets	| filter: vm.filterTickets) 
 																			| startFrom: (vm.page-1) * vm.options.itemsPerPage
 																			| limitTo: vm.options.itemsPerPage">
-										<td data-ng-click="vm.toggle(t,'expanded')">
-											<span class="glyphicon" data-ng-class="{'glyphicon-minus':t.expanded, 'glyphicon-plus':!t.expanded}"></span>
+										<td data-ng-click="vm.toggleTicketDetails(t,'Details')">
+											<span class="glyphicon" data-ng-class="{'glyphicon-minus':t.activeTab, 'glyphicon-plus':!t.activeTab}"></span>
 										</td>
 										<td class="text-center" >{{::t.number}}</td>
 										<td>
@@ -315,23 +203,63 @@
 										</td>
 										<td>
 											<span class="dropdown" dropdown>
-												<span class="fa fa-comments-o icon-badgeable hover-icon dropdown-toggle" dropdown-toggle 
-													title="Retrieve comments">
-													<span class="icon-badge">{{t.comments.comments.length}}</span>
+												<span class="fa fa-lg fa-comments-o icon-badgeable hover-icon" ng-click="vm.toggleTicketDetails(t,'Comments')"
+													title="Show/hide comments">
+													<span class="icon-badge">{{vm.data.comments[t.id].length}}</span>
 												</span>
-												<span class="list-group dropdown-menu">
+												<!--span class="list-group dropdown-menu">
 													<a href class="list-group-item" ng-click="vm.getComments(t.number)">Refresh Comments</a>
 													<a href class="list-group-item" ng-click="vm.addComment(t.number)">Add a Comment</a>
 													<a href class="list-group-item" ng-click="vm.viewComments(t.number)">View Comments</a>
-												</span>
+												</span-->
 											</span>
 										</td>
 									</tr>
-									<tr data-ng-if="t.expanded" data-ng-repeat-end>
+									<tr data-ng-if="t.activeTab" data-ng-repeat-end>
 										<td></td>
 										<td colspan="6">
-											<span click-to-edit="t.description" test="'testVal'" 
-														on-value-change="vm.updateTicket" value-change-parms="[t,'description','@newVal','@oldVal']"></click-to-edit>
+											<tabset>
+												<tab heading="Details" active="t.activeTab=='Details'" ng-click="t.activeTab='Details'">
+													<span click-to-edit="t.description" test="'testVal'" 
+														on-value-change="vm.updateTicket" value-change-parms="[t,'description','@newVal','@oldVal']"></span>
+												</tab>
+												<tab heading="Comments"  active="t.activeTab=='Comments'" ng-click="t.activeTab='Comments'">
+													<span ng-if="!vm.data.comments">No comments yet</span>
+													<table class="table table-compressed" ng-if="vm.data.comments">
+														<tr ng-show="showCommentEntry">
+															<td>
+																<button class="btn btn-default btn-sm"
+																	ng-click="vm.saveComment(t,comment); showCommentEntry=!showCommentEntry">Save Comment</button>
+															</td>
+															<td>
+																<textarea cols="90" ng-model="comment"></textarea>
+															</td>
+														</tr>
+														<tr ng-hide="showCommentEntry">
+															<td colspan="3">
+																<button class="btn btn-default btn-sm"
+																	ng-click="showCommentEntry=!showCommentEntry;">Add Comment</button>
+																<button class="btn btn-default btn-sm"
+																	ng-click="vm.getTicketComments(t)">Refresh</button>
+															</td>
+															<td>
+															</td>
+														</tr>
+														<tr ng-repeat="c in vm.data.comments[t.id]|orderBy:'-created_on'">
+															<td>{{c.created_on|date:'ddMMMyy&nbsp;HH:mm'}}</td>
+															<td>
+																<table>
+																	<tr ng-if="c.comment.trim()>''">
+																		<td>{{c.comment}}</td>
+																	</tr>
+																	<tr ng-if="c.ticket_changes.trim()>''">
+																		<td><em>{{vm.parseTicketChanges(c.ticket_changes)}}</em></td>
+																	</tr>
+																</table>
+															</td>
+														</tr>
+													</table>
+												</tab>
 										</td> 
 									</tr>
 								</tbody>
@@ -350,6 +278,7 @@
     <script src="js/angular-localForage.js" charset="utf-8"></script>
     <script src="js/ui-bootstrap-tpls-0.12.1.min.js" charset="utf-8"></script>
     <script src="ngDirectiveModule.js" charset="utf-8"></script>
+    <script src="assemblaMain.js" charset="utf-8"></script>
     <script src="assembla.js" charset="utf-8"></script>
     <script src="assemblaService.js" charset="utf-8"></script>
     <script src="assemblaPersistenceService.js" charset="utf-8"></script>

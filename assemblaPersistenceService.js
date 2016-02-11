@@ -1,4 +1,12 @@
 angular.module("assembla")
+
+	.config(['$localForageProvider', function($localForageProvider){
+    $localForageProvider.config({
+        storeName   : 'assembla', // name of the table
+        description : 'assembla tickets and options'
+    });
+	}])
+	
   .factory("assemblaPersistenceService", ['$rootScope', '$localForage', '$filter', '$q',
 	function($rootScope, $lf, $filter, $q) {
 
@@ -154,7 +162,7 @@ angular.module("assembla")
 					promises.push($q.when($lf.setItem(newStub,val)));
 				//}
 			}
-			return promises;
+			return $q.all(promises);
 		}
 		function deleteDottedKeys() {
 			$lf.iterate(function(val,key,count) {

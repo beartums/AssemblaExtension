@@ -1,0 +1,143 @@
+<div class="container-fluid">
+	<div class="row">
+		<br/>
+		<button type="button" class="close pull-right" ng-click="vm.showTools=!vm.showTools">
+			<span>&times;&nbsp;&nbsp;</span>
+		</button>
+		<div class="col-md-12 text-center">
+			<h2>Tools</h2>
+		</div>
+	</div>
+	<br/>
+	<div class="row">
+		<div class="col-md-10 col-md-offset-2">
+			<span class="btn btn-default" ng-click="vm.resetCounts()"
+				title="recalculate how many of each type of ticket">Update Ticket Counts</span>
+			<strong><span class='fa fa-check text-success' ng-if="vm.resetSuccess"></span></strong>
+		</div>
+	</div>
+	<br/>
+	<div class="row">
+		<div class="col-md-10 col-md-offset-2">
+			<span class="btn btn-default" ng-click="vm.fillTicketGaps()"
+				title="Look for tickets with numbers in the gaps of tickets already downloaded">Fill Ticket Gaps</span>
+			<!--strong><span class='fa fa-check text-success' ng-if="vm.resetSuccess"></span></strong-->
+		</div>
+	</div>
+	<br />
+	<div class="row">
+		<div class="col-md-8 col-md-offset-2">
+			<div class="input-group">
+				<input type="date" class="form-control" ng-model="vm.downloadTicketsSince">
+				<div class="input-group-btn">
+					<button class="btn btn-default" 
+								title="Download and add/merge all tickets since the entered date"
+								ng-click="vm.getUpdatedTickets(vm.downloadTicketsSince)">
+						<span class="fa fa-download"></span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>				
+	<br/>
+	<div class="row">
+		<div class="form-group">
+			<div class="col-md-8 col-md-offset-2">
+				<button class="btn btn-default" title="Update the selected reference entities from the API"
+						ng-click="vm.updateRelatedEntities(vm.entityUpdateObj)">
+					Update References
+				</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8 col-md-offset-2">
+				<span>
+					<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.spaces || vm.entityUpdateObj.spaces===true"></span>
+					<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.spaces==vm._fetchingText"></span>
+					<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.spaces==vm._successText"></span>
+					<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.spaces==vm._failureText"></span>
+				</span>
+				<input type='checkbox' ng-model="vm.entityUpdateObj.spaces" ng-init="true">
+				Spaces
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8 col-md-offset-2">
+				<span>
+					<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.milestones || vm.entityUpdateObj.milestones===true"></span>
+					<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.milestones==vm._fetchingText"></span>
+					<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.milestones==vm._successText"></span>
+					<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.milestones==vm._failureText"></span>
+				</span>
+				<input type='checkbox' ng-model="vm.entityUpdateObj.milestones" ng-init="true">
+				Milestones
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8 col-md-offset-2">
+				<span>
+					<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.users || vm.entityUpdateObj.users===true"></span>
+					<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.users==vm._fetchingText"></span>
+					<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.users==vm._successText"></span>
+					<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.users==vm._failureText"></span>
+				</span>
+				<input type='checkbox' ng-model="vm.entityUpdateObj.users" ng-init="true">
+				Users
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8 col-md-offset-2">
+				<span>
+					<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.customFields || vm.entityUpdateObj.customFields===true"></span>
+					<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.customFields==vm._fetchingText"></span>
+					<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.customFields==vm._successText"></span>
+					<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.customFields==vm._failureText"></span>
+				</span>
+				<input type='checkbox' ng-model="vm.entityUpdateObj.customFields" ng-init="true">
+				Custom Fields
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8 col-md-offset-2">
+				<span>
+					<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.statuses || vm.entityUpdateObj.statuses===true"></span>
+					<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.statuses==vm._fetchingText"></span>
+					<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.statuses==vm._successText"></span>
+					<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.statuses==vm._failureText"></span>
+				</span>
+				<input type='checkbox' ng-model="vm.entityUpdateObj.statuses" ng-init="true">
+				Statuses
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8 col-md-offset-2">
+				<span>
+					<span class="fa fa-spinner invisible" ng-if="!vm.entityUpdateObj.tags || vm.entityUpdateObj.tags===true"></span>
+					<span class="fa fa-spinner fa-spin" ng-if="vm.entityUpdateObj.tags==vm._fetchingText"></span>
+					<span class="fa fa-check text-success" ng-if="vm.entityUpdateObj.tags==vm._successText"></span>
+					<span class="fa fa-exclamation text-danger" ng-if="vm.entityUpdateObj.tags==vm._failureText"></span>
+				</span>
+				<input type='checkbox' ng-model="vm.entityUpdateObj.tags" ng-init="true">
+				Tags
+			</div>
+		</div>
+		<br />
+		<!--div class="form-group">
+			<label class="col-md-8 col-md-offset-1">Enable Comment Sync:</label>
+			<strong><span class="fa fa-2x col-md-3" style="top:-2px"
+				ng-class="{'fa-toggle-on':vm.data.updateStatus.comments.syncEnabled,
+									'fa-toggle-off':!vm.data.updateStatus.comments.syncEnabled,
+									'text-success':vm.data.updateStatus.comments.syncEnabled,
+									'text-muted':!vm.data.updateStatus.comments.syncEnabled}"
+					ng-click="vm.toggleCommentSync()" >
+			</span></strong>
+		</div>
+		<div class="form-group" ng-if="vm.data.updateStatus.comments.syncEnabled">
+			<label class="col-md-6 col-md-offset-1 small">Last Sync Date: 
+				{{!vm.data.updateStatus.comments.lastCommentActivitySynced?'(none)':vm.data.updateStatus.comments.lastCommentActivitySynced}}
+			</label>
+			<button class="btn btn-default btn-sm">Sync</button>
+		</div-->
+	</div>
+	
+</div>
