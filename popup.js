@@ -34,18 +34,18 @@ angular.module("assembla")
 		}
 	})
 
-	.controller("popupController", ['assemblaService','assemblaOptionsService','$window', '$scope', popupControllerFunction]);
+	.controller("popupController", ['assemblaService','assemblaPersistenceService','$window', '$scope', popupControllerFunction]);
 	
-	function popupControllerFunction(as,aos,$window,$scope) {
+	function popupControllerFunction(as,aps,$window,$scope) {
 		
 		var pu = this;
 		pu.bgPage = chrome.extension.getBackgroundPage();
-		pu.options = aos.options;
+		pu.options = aps.options;
 		pu.gotoUrl = gotoUrl;
 		pu.authorInitials = authorInitials;
 		pu.markAsRead = markAsRead;
 		console.dir(pu.bgPage);
-		//aos.setOnReadyHandler(init);
+		//aps.setOnReadyHandler(init);
 		
 		function gotoUrl(url) {
 			$window.open(url);

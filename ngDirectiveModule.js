@@ -1,7 +1,8 @@
 ﻿var directiveModule = angular.module("directiveModule", []);
 
 // click-to-edit, 
-//  adapted fromt he code on Tim Riley's blog: http://icelab.com.au/articles/levelling-up-with-angularjs-building-a-reusable-click-to-edit-directive/
+//  adapted from the code on Tim Riley's blog: 
+//	http://icelab.com.au/articles/levelling-up-with-angularjs-building-a-reusable-click-to-edit-directive/
 //
 directiveModule.directive("clickToEdit", function ($timeout) {
     var editorTemplate = '<span class="click-to-edit">' +

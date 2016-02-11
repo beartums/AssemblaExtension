@@ -15,14 +15,17 @@ angular.module("assembla")
       getTickets: getTickets,
       getMilestones: getMilestones,
 			getUsers: getUsers,
+			getComments: getComments,
 			getUser: getUser,
 			getTags: getTags,
 			getStatuses: getStatuses,
 			getRoles: getRoles,
 			getCustomFields: getCustomFields,
 			getTicket: getTicket,
+			getTicketComment: getTicketComment,
 			getActivity: getActivity,
 			updateTicket: updateTicket,
+			saveComment: saveComment,
 			markMentionAsRead: markMentionAsRead,
 			getUpdatedTickets: getUpdatedTickets,
 			getUserMentions: getUserMentions,
@@ -107,11 +110,12 @@ angular.module("assembla")
 			var p = $http.get(gdUrl,reqObj);
 			
 			if (qObj.doNotPage) return p;
-			return p.success(function(data) {
+			return p.then(function(results) {
+				var data = angular.isArray(results)?results:results.data;
 				if (!qObj.returnedData) qObj.returnedData=[];
 				if (angular.isArray(data)) {
 					data.forEach(function(item) {qObj.returnedData.push(item); });
-				}
+				} 
 				
 				if (qObj.dataHandler) {
 					if (qObj.dataHandler(data)) return qObj.returnedData;
@@ -127,7 +131,10 @@ angular.module("assembla")
 		
 		function getTicket(qObj) {
 			var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
-        "/tickets/" + qObj.ticketId + ".json";
+        "/tickets/";
+			url += qObj.ticketId ? ("id/" + qObj.ticketId) : qObj.ticketNumber;
+			url += ".json";
+			
 			if (qObj.parms) url += makeUrlParms(qObj.parms);
 			
 			return $http.get(url,reqObj);
@@ -148,13 +155,30 @@ angular.module("assembla")
       var url = "https://api.assembla.com/v1/user/mentions.json"
       return getData(url,qObj)
     }
-
+	// type can be 'all', 'completed', or null
     function getMilestones(qObj) {
       var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
           "/milestones" + (qObj.type ? "/" + qObj.type : "") + ".json";
 			if (qObj.parms) url += makeUrlParms(qObj.parms);
       return $http.get(url,reqObj);
     }
+		function getTicketComment(qObj) {
+			var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
+          "/tickets/" + qObj.ticketNumber + "/ticket_comments/" + qObj.commentId + ".json";
+      return getData(url,qObj);
+		}
+		function getComments(qObj) {
+			var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
+          "/tickets/" + qObj.ticketNumber + "/ticket_comments.json";
+      return getData(url,qObj);
+		}
+		function saveComment(qObj) {
+			var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +
+				"/tickets/" + qObj.ticketNumber + "/ticket_comments.json";
+			var hObj = angular.copy(reqObj.headers);
+			hObj["Content-type"]="application/json";
+			return $http.post(url,{ticket_comment:qObj.data},{headers:hObj});
+		}
 		
     function getStatuses(qObj) {
       var url = "https://api.assembla.com/v1/spaces/" + qObj.spaceId +

@@ -146,8 +146,8 @@
 		</span>
 		<div class="dropdown-menu" >
 			 <div style="display:inline-block; min-height:290px;">
-					<datepicker ng-model="vm.createdSince" prevent-default 
-					ng-change="vm.addToFilter('created_on',vm.createdSince)"
+					<datepicker ng-model="vm.options.filters.created_on" prevent-default 
+					ng-change="vm.optionChange()"
 					show-weeks="false" class="well well-sm"></datepicker>
 			</div>
 		</div>
@@ -161,8 +161,8 @@
 		</span>
 		<div class="dropdown-menu" >
 			 <div style="display:inline-block; min-height:290px;">
-					<datepicker prevent-default ng-model="vm.updatedSince"
-					ng-change="vm.addToFilter('updated_at',vm.updatedSince)"
+					<datepicker prevent-default ng-model="vm.options.filters.updated_at"
+					ng-change="vm.optionChange()"
 					show-weeks="false" class="well well-sm"></datepicker>
 			</div>
 		</div>

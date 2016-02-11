@@ -1,60 +1,27 @@
-angular.module("assembla", ['ui.bootstrap','directiveModule','LocalForageModule','pageslide-directive'])
-
-	.config(['$localForageProvider', function($localForageProvider){
-    $localForageProvider.config({
-        storeName   : 'assembla', // name of the table
-        description : 'assembla tickets and options'
-    });
-	}])
-	
-	// startFrom filter for paging
-	.filter('startFrom', function () {
-		return function (input, start) {
-			if (input) {
-				start = +start; //parse to int
-				return input.slice(start);
-			}
-			return input;
-		}
-  })
-			
-	// Needed since stoppropagation was causing a page reload
-	.directive('preventDefault', function() {
-			return function(scope, element, attrs) {
-					angular.element(element).bind('click', function(event) {
-							event.preventDefault();
-							event.stopPropagation();
-					});
-			}
-	})
-
-	// ticket text filter
-	.filter('ticketTextSearch', function () {
-		return function (tickets, text) {
-			if (!text || text.trim() == "") return tickets;
-			filteredTickets=[]
-			tickets.forEach(function(t,idx) {
-				var ticketText = t.number.toString() + '@@' + t.summary + '@@' + t.description;
-				if (ticketText.toLowerCase().indexOf(text.toLowerCase())>-1 || !text || text.trim()=="") filteredTickets.push(t);
-			});
-			return filteredTickets
-		}
-  })
-
+angular.module("assembla")
 	.controller("assemblaController", 
 			['$q','$http', '$scope', '$filter', '$timeout', 'assemblaService', 'assemblaPersistenceService', '$localForage',
 		assemblaControllerFunction
 	]);
 
+	/**
+	 * @ngdoc controller
+	 * @name assembla.controller:AssemblaController
+	 * @description
+	 * Controller for the primary Assembla Ticket Manager Interface
+	 *
+	 **/
 function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps, $lf) {
 	var vm = this
 
+	// Constant Values
 	vm._unassigned = '[unassigned]';
 	vm._blank = '[blank]';
 	vm._ignore = '@_@ignore@_@';
-	vm._fetchingText = "fetching..."
-	vm._successText = "success"
-	vm._failureText = "failure"
+	vm._fetchingText = "fetching...";
+	vm._successText = "success";
+	vm._failureText = "failure";
+	
 
 	vm.options = aps.options
 	vm.options.filters = {};
@@ -72,9 +39,16 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 	vm.data.customFields = [];
 	vm.data.ticketCount = {};
 	vm.data.selectedSpace = null;
-	vm.selectedTickets = [];
-
-	vm.selectMilestone = selectMilestone;
+	vm.data.comments = {};
+	vm.data.updateStatus = {
+		activityLastUpdated: new Date('1/1/2006'),
+		ticketLastUpdated: new Date('1/1/2006'),
+		comments: {
+			syncEnabled: false,
+			lastCommentActivitySynced: null
+		}
+	}
+	
 	vm.refresh = refresh;
 	vm.abbreviate = abbreviate;
 	vm.toggle = toggle;
@@ -86,38 +60,57 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 	vm.addToFilter = addToFilter;
 	vm.filterTickets = filterTickets;
 	vm.sort = sort;
+	vm.getTicketComments = getTicketComments;
 	vm.getCount = getCount;
 	vm.updateTickets = updateTickets;
 	vm.getUpdatedTickets=getUpdatedTickets;
 	vm.resetCounts = resetCounts;
 	vm.cancel = cancel;
+	vm.toggleCommentSync = toggleCommentSync;
 	vm.optionChange = aps.onchange;
 	vm.cancelClick = cancelClick;
+	vm.toggleTicketDetails = toggleTicketDetails;
 	vm.toggleTicketSelected = toggleTicketSelected;
 	vm.toggleTicketsInCompletedMilestones =  toggleTicketsInCompletedMilestones;
 	vm.updateRelatedEntities= updateRelatedEntities;
+	vm.parseTicketChanges=parseTicketChanges;
+	vm.saveComment = saveComment;
+	vm.visibleTicketsCount = visibleTicketsCount;
 	
 	aps.setOnReadyHandler(refresh);
 	return vm;
 
+	/**
+	 * @ngdoc method
+	 * @name init
+	 * @methodOf Assembla.AssemblaController
+	 * @description
+	 * Initialize the Assembla#AssemblaService with authorization values
+	 **/
 	function init() {
 		as.init({
 			secret: vm.options.secret,
 			key: vm.options.key
 		});
-		
-		//if (vm.options.userLogin) startMentionWatch(vm.options.userLogin,vm.userMentions);
-		
-		chrome.runtime.onMessage.addListener(
-			function(request,sender,sendResponse) {
-			}
-		);
-		
+		// Add a listener for messages from other modules in this extension
+		// chrome.runtime.onMessage.addListener(
+			// function(request,sender,sendResponse) {
+			// }
+		// );		
 	}
 	
+	/**
+	* @ngdoc method
+	* @name cancelClick
+	* @methodOf Assembla.AssemblaController
+	* @description
+	* Cancel a click event
+	**/
 	function cancelClick($event) {
 		$event.stopPropagation();
 	}
+	
+	// Cancel the form data entry and roll it back
 	function cancel(e,formField) {
 		if (e.keyCode==27) {
 			formField.$rollbackViewValue();
@@ -126,19 +119,35 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		if (e.keyCode=='13') return false;
 		return true
 	}
+	/*********************************************************************************************************
+	* HELPER methods
+	**********************************************************************************************************/
 	
+	/**
+	* @ngdoc method
+	* @name getFromList
+	* @methodOf Assembla.AssemblaController
+	* @description From a list of objects, find one where the keyprop = findText
+	* and return the valueProp 
+	*
+	* @param {string} The text to be found
+	* @param {Array} Array of objects to be searched
+	* @param {string} The property to be compared to findText
+	* @param {string?} The name of the property to be returned.  Optional -- full item if null
+	* @returns {string | object | number} The value of the specified property**/
 	function getFromList(findText,list,keyProp,valueProp) {
 		return list.reduce(function(value,item) {
 			if (value) return value;
 			var compareText = item && item[keyProp] ? item[keyProp] : null
 			if (compareText==findText) {
-				value = item[valueProp];
+				value = valueProp? item[valueProp]: item;
 				return value;
 			}
 			return null;
 		},null);
 	}
-	
+	// Given an object and (optional) delimiter, join the property names in a string list separated by
+	// the delimieter
 	function joinObjProps(obj,delim) {
 		delim = delim || ', ';
 		var joinString = "";
@@ -147,7 +156,8 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		}
 		return joinString;
 	}
-	
+
+	// From a list of objects, return a concatenated string of the value of specified property for each object
 	function joinObjVals(objs,propName,delim) {
 		delim = delim || ', ';
 		return objs.reduce(function(string,obj) {
@@ -155,7 +165,77 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 			return string + (string=="" ? "" : delim) + obj[propName];
 		},"");
 	}
+			// initialize an object path for properties that don't exist. 
+	// DO NOT overwrite the target if it already exists
+	// return the property being initialized (or found, if already initialized
+	function initPropPath(obj,propPath,dflt) {
+		dflt = dflt || {};
+		rval = null
+		var curObj = obj || {}
+		var props = propPath.split('.');
+		for (var i = 0; i<props.length; i++) {
+			if (!curObj[props[i]]) {
+				curObj[props[i]]= i==props.length-1 ? dflt : {};
+			}
+			curObj = curObj[props[i]];
+		} 
+		return curObj;
+	}
 	
+	// From the specified object, find the value of the specified property and return it
+	// or the dflt value if the property is not defined/null.  Property can be a single words
+	// or a property path (properties separated by '.' e.g. "person.name.first"
+	function getValueByPropPath(propPath,obj,dflt) {
+		dflt = dflt || null
+		var props = propPath.split('.');
+		return props.reduce(function(val, prop) {
+			if (!val || val == dflt) return dflt;
+			return val[prop];
+		},obj);
+	}
+	// Set the specified value to the specified property in the object.
+	// This method accepts a property path and will create the necessary objects to
+	// follow it.
+	function setValueByPropPath(propPath,obj,val) {
+		var props = propPath.split('.');
+		props.forEach(function(prop, idx) {
+			if (!obj) return
+			if (idx==props.length-1) {
+				obj[prop] = val;
+			} else {
+				obj = obj[prop];
+			}
+		});
+	}
+
+	// Returns true if there is at least on propery in the object that is true
+	// (or truthy, if truthyIsOkay is true)
+	function hasTrueProperty(obj,truthyIsOkay) {
+		if (!obj) return false;
+		for (var prop in obj) {
+			if (obj[prop]===true || (truthyIsOkay && obj[prop])) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	
+	/*************************************************************************************************
+	* Ticket-Specific Methods
+	**************************************************************************************************/
+	function visibleTicketsCount() {
+		var count = 0;
+		if (!vm.data || !vm.data.tickets) return 0;
+		console.time('count')
+		for (var i = 0; i<vm.data.tickets.length; i++) {
+			if (vm.showCompletedMilestones || !isTicketHidden(vm.data.tickets[i])) {
+				count++;
+			}
+		}
+		console.timeEnd('count')
+			return count;
+	}
 	// get initials of author or mention from the userid
 	function getUserInitials(user) {
 		var init = '', inits = []
@@ -171,6 +251,7 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		},"");
 	}
 	
+	// Get initials from a generic string.  Return fist letter of each word, capitalized and concatenated
 	function getInitials(string) {
 		if (!string || !string.length || string.length<5) return string;
 		words = string.split(' ');
@@ -179,31 +260,22 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		}, '');
 	}
 	
+	// get the properties from the 'parsed' object in the specified ticket
 	function getParsedProps(ticket) {
 		if (!ticket.parsed) parseDescription(ticket);
 		return joinObjProps(ticket.parsed);
 	}
-	
-	function getValueByPropPath(propPath,obj,dflt) {
-		dflt = dflt || null
-		var props = propPath.split('.');
-		return props.reduce(function(val, prop) {
-			if (!val || val == dflt) return dflt;
-			return val[prop];
-		},obj);
+
+	// Set the detail tab as active or inactive
+  function toggleTicketDetails(ticket,activeTab) {
+		if (ticket.activeTab==activeTab) {
+			delete ticket.activeTab;
+		} else {
+			ticket.activeTab = activeTab;
+		}
 	}
-	function setValueByPropPath(propPath,obj,val) {
-		var props = propPath.split('.');
-		props.forEach(function(prop, idx) {
-			if (!obj) return
-			if (idx==props.length-1) {
-				obj[prop] = val;
-			} else {
-				obj = obj[prop];
-			}
-		});
-	}
-	
+		
+	// If selected, unselect, otherwise select the ticket
 	function toggleTicketSelected(ticket) {
 		if (!vm.selectedTickets) vm.selectedTickets = [];
 		var idx = vm.selectedTickets.indexOf(ticket);
@@ -214,34 +286,26 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		}
 	}
 	
-	// TODO: Tickets found during Assembla Update: check hidden AND live tickets for matches
+	// Turn on or off the toggle that hides tickets in completed milestones
 	function toggleTicketsInCompletedMilestones(showCompletedMilestones) {
-		if (showCompletedMilestones) {  // If we are going to be showing tickets in completed milestones
-			vm.data.hiddenTickets.forEach(function(ticket) {
-				vm.data.tickets.push(ticket);
-				updateTicketCount(ticket,vm.data.ticketCount); // update category indexes for incoming tickets
-				updateTicketCount(ticket,vm.data.hiddenTicketCount,true); // likewise remove them from the hidden indexes
-			});
-			vm.data.hiddenTickets = [];
-		} else {
-			var deletedIdxs = [];
-			for (var i=0; i<vm.data.tickets.length; i++) {
-				var isCompleted = vm.data.milestones[vm.data.tickets[i].milestone_id].is_completed;
-				if (isCompleted) {
-					var ticket = vm.data.tickets[i];
-					vm.data.hiddenTickets.push(ticket);
-					deletedIdxs.push(i);
-					updateTicketCount(ticket,vm.data.ticketCount,true); // remove from live indexes
-					updateTicketCount(ticket,vm.data.hiddenTicketCount); // add to hidden indexes
-				}
-			}
-			for (var i = deletedIdxs.length-1; i>=0; i--) {
-				delete vm.data.tickets.splice([deletedIdxs[i]],1);
-			};
-		}
+		// if (showCompletedMilestones) {  // If we are going to be showing tickets in completed milestones
+			// vm.data.hiddenTickets = [];
+		// } else {
+			// vm.data.tickets.forEach(function(ticket) {
+				// var isCompleted = vm.data.milestones[ticket.milestone_id].is_completed;
+				// if (isCompleted) {
+					// vm.data.hiddenTickets.push(ticket); // Tickets in hiddenTickets are not shown
+				// }
+			// })
+		// }
+		resetCounts();
+		// Save changed objects locally
 		aps.saveDataObjects(['tickets','hiddenTickets','ticketCount','hiddenTicketCount']);
 	}
+	
+	// Sortfield specified the ticket property used for sorting
 	function sort(sortField) {
+		// if the sortfield hasn't changed, just reverse the direction
 		if (sortField == vm.options.currentSortColumn) {
 			vm.options.currentSortAscending = !vm.options.currentSortAscending;
 		} else if (sortField) { // if null, use the current sort column, if any
@@ -290,6 +354,7 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		return vm.data.users.id.login
 	}
 	
+	// Generic comparison -- compare a ticket property value to a specified value.
 	function getCount(ticketPropName, comp, value) {
 		var cnt = 0
 		if (!vm.data || !vm.data.tickets) return 0;
@@ -299,33 +364,41 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		return cnt;
 	}
 	
-	function evalCompare(ticket, tPropName, comp, value) {
-		var tVal = ticket[tPropName];
-		if (isin(comp,['=','eq','==','EQ'])) return (tVal == value);
-		if (isin(comp,['>','gt','GT'])) return (tVal > value);
-		if (isin(comp,['>=','ge', 'GE','=>'])) return (tVal >= value);
-		if (isin(comp,['<=','le','LE','=<'])) return (tVal <= value);
-		if (isin(comp,['<','lt','LT'])) return (tVal < value);
-		return false;
-	}
-	function isin(val,arr,prop) {
+	// function evalCompare(ticket, tPropName, comp, value) {
+		// var tVal = ticket[tPropName];
+		// if (isin(comp,['=','eq','==','EQ'])) return (tVal == value);
+		// if (isin(comp,['>','gt','GT'])) return (tVal > value);
+		// if (isin(comp,['>=','ge', 'GE','=>'])) return (tVal >= value);
+		// if (isin(comp,['<=','le','LE','=<'])) return (tVal <= value);
+		// if (isin(comp,['<','lt','LT'])) return (tVal < value);
+		// return false;
+	// }
+	// function isin(val,arr,prop) {
 		
-		arr.forEach(function(a) {
-			var aVal = prop && a[prop] ? a[prop] : a;
-			if (aVal==val) return a;
-		});
-	}
-		
+		// arr.forEach(function(a) {
+			// var aVal = prop && a[prop] ? a[prop] : a;
+			// if (aVal==val) return a;
+		// });
+	// }
+	
+	// Add a unique ID to the properties IDs to be included for a specific property
+	// e.g. "AssignedUser","12345" will include all the tickets assigned to user 12345 to the filter
 	function addToFilter(propName,id) {
 		var filter = initPropPath(vm.options.filters,propName,{});
 		filter[id] = !filter[id];
 		vm.optionChange();
 	}
 	
+	// return true if the ticket IS to be included in the filtered tickets list
 	function filterTickets(ticket,idx) {
 		var include = false;
 		var opts = vm.options;
-	
+		
+		if (!vm.showCompletedMilestones) {
+			if (isTicketHidden(ticket)) return false;
+		}
+		
+		// Do NOT exclude tickets based on a property if that property has no assigned values
 		var ignoreUser =  !opts.filters || !hasTrueProperty(vm.options.filters.user,true);
 		var ignoreMilestone =  !opts.filters || !hasTrueProperty(vm.options.filters.milestone,true);
 		var ignoreStatus = !opts.filters || !hasTrueProperty(vm.options.filters.status,true);
@@ -335,43 +408,63 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 			ignoreCustomFields[field.title] = !opts.filters.custom_fields 
 																				|| !hasTrueProperty(vm.options.filters.custom_fields[field.title],true);
 		});
-		// check dates
-		if (opts.filters.updated_at && new Date(opts.filters.updated_at)<new Date(ticket.updated_at)) return false;
-		if (opts.filters.created_on && new Date(opts.filters.created_on)<new Date(ticket.created_on)) return false;
+		// A tickt is included if it it's properties can be found in the list of all properties with
+		// and ID list (or, if no id lists are specified, include all tickets
+		
 		// dev id
 		var id = ticket.assigned_to_id;
 		id = id && id.trim() != "" ? id : vm._unassigned;
 		if (!ignoreUser && !vm.options.filters.user[id]) return false;
+		
+		// Milestone
 		var id = ticket.milestone_id;
 		id = id && id.toString ? id.toString() : id;
 		id = id && id.trim() != "" ? id : vm._unassigned;
 		if (!ignoreMilestone && !vm.options.filters.milestone[id]) return false;
+		// status
 		if (!ignoreStatus && !vm.options.filters.status[ticket.status]) return false;
+		// Custom Fields
 		for (var prop in ignoreCustomFields) {
 			var val = ticket.custom_fields[prop];
 			val = val + val.trim() != '' ? val : vm._blank;
 			if (!ignoreCustomFields[prop] && !vm.options.filters.custom_fields[prop][val]) return false;
 		}
-		if (vm.createdSince && vm.createdSince > new Date(ticket.created_on)) return false;
-		var ticketText = ticket.number.toString() + '@@' + ticket.summary + '@@' + ticket.description;
+		if (opts.filters.created_on && opts.filters.created_on > new Date(ticket.created_on)) return false;
+		if (opts.filters.updated_at && opts.filters.updated_at > new Date(ticket.updated_at)) return false;
+		var ticketText = ticket.number.toString() + '@@' + ticket.summary + '@@' + ticket.description + '@@' + ticket.status;
 		if (!ignoreText && ticketText.toLowerCase().indexOf(vm.filterText.toLowerCase())==-1) return false;
 		return true;
 	}
 	
-	function hasTrueProperty(obj,truthyIsOkay) {
-		if (!obj) return false;
-		for (var prop in obj) {
-			if (obj[prop]===true || (truthyIsOkay && obj[prop])) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	function refresh() {
 		init();
 		// Get tickets
+		//return;
+		console.time('getSavedData')
 		aps.getAllData().then(function(results) {
+		console.timeEnd('getSavedData')
+			if (!vm.data.comments) {
+				vm.data.comments = {};
+				aps.saveData('comments');
+			}
+			if (!vm.data.updateStatus) {
+				vm.data.updateStatus = {
+					activityLastUpdated: new Date('1/1/2006'),
+					ticketLastUpdated: new Date('1/1/2006'),
+					comments: {
+						syncEnabled: false,
+						lastCommentActivitySynced: null
+					}
+				}
+				aps.saveData('updateStatus');
+			}
+			if (!vm.data.updateStatus.comments) {
+				vm.data.updateStatus.comments = {
+					syncEnabled: false,
+					lastCommentActivitySynced: null
+				}
+				aps.saveData('updateStatus');
+			}
 			if (!vm.data.selectedSpace ) {
 				var p = $q.when(updateRelatedEntities({
 					spaces:true,milestones:true,users:true,tags:true,customFields:true,statuses:true
@@ -380,17 +473,31 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 				var p = $q.when('');
 			}
 			p.then(function() {
-				getUpdatedTickets(vm.data.lastCompletedUpdateDate).success(function(data) {
-					vm.data.lastCompletedUpdateDate = new Date();
-					vm.data.mostRecentUpdateDate = null;
+				// once the selectedSpace is in place, get the tickets updated since last update...
+				console.time('getUpdatedTickets');
+				getUpdatedTickets(vm.data.lastCompletedUpdateDate).then(function(data) {
+					console.timeEnd('getUpdatedTickets');
+					//vm.data.lastCompletedUpdateDate = new Date();
+					//vm.data.mostRecentUpdateDate = null;
 					if (vm.options.currentSortColumn) sort;
-					aps.saveAllData();
+					console.time('SaveData');
+					aps.saveAllData().then(function(results) {
+						console.timeEnd('SaveData');
+					});
 				});
+				// ... and the comments updated since the last update
+				/**
+				if (vm.data.updateStatus.comments.syncEnabled) {
+					var lastSynced = vm.data.updateStatus.comments.lastCommentActivitySynced;
+					getUpdatedComments(lastSynced).then(function(data) {
+						vm.data.updateStatus.comments.lastCommentActivitySynced = data.newestCreated
+					})
+				}
+				**/
 			});
 		});
-		// get upcoming milestones
 	}
-	
+
 	function updateRelatedEntities(updateObj) {
 		if (updateObj.spaces) {
 			updateObj.spaces = 'fetching...'
@@ -428,6 +535,9 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 			});	
 		});
 	}
+	
+	// Assembla allows for different "Spaces" with multiple repositories in each
+	// Assume the first Space is the spelected space
 	function getSelectedSpace() {
 		return as.getSpaces().then(function(data) {
 			vm.data.selectedSpace=data.data[0];
@@ -435,30 +545,26 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 			return data.data[0];
 		});
 	}
+	// get milestones
 	function getMilestones() {
-		return as.getMilestones({spaceId: vm.data.selectedSpace.id,per_page:100}).success(function(data) {
+		// default milestones are the current milestones
+		return as.getMilestones({spaceId: vm.data.selectedSpace.id,
+														per_page:100,
+														type: 'all',
+														parms: {due_date_order: "DESC"}
+														}).success(function(data) {
+			vm.data.milestones = {}; // clear out the milestones.  Can they be deleted?
 			data.forEach(function(item) {
 				item.initials = getInitials(item.title);
 				vm.data.milestones[item.id]=item
 			});
 			aps.saveData('milestones');
-			// get past milestones
-			return as.getMilestones({spaceId: vm.data.selectedSpace.id, 
-											type: 'completed',
-											parms: {due_date_order:"DESC"}
-										}).success(function(data) {
-				//if (found) selectMilestone();
-				data.forEach(function(item) { 
-					item.initials = getInitials(item.title);
-					vm.data.milestones[item.id]=item;
-				});
-				aps.saveData('milestones');
-				return vm.data.milestones;
-			});
+			return vm.data.milestones;
 		});
 	}
 	function getUsers() {
 		var qObj = {spaceId: vm.data.selectedSpace.id, parms: {per_page: 100}};
+		// probably more intuitive to get users and then their roles, but this works
 		return as.getRoles(qObj).success(function(data){
 			var roles = data;
 			vm.data.users = {}
@@ -476,6 +582,7 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 			return $q.all(promises);
 		}); 
 	}
+	
 	function getTags() {
 		var qObj = {spaceId: vm.data.selectedSpace.id, parms: {per_page: 100}};
 		return as.getTags(qObj).success(function(data){
@@ -499,21 +606,104 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 			aps.saveData('customFields');
 		});
 	}
-	function recalcEpics() {
-		angular.copy(vm.data.epics,epics);
-		vm.data.epics = {};
-		[vm.data.tickets,vm.data.hiddenTickets].forEach(function(tickets, i) {
-			tickets.forEach(function(ticket,j) {
-				if (ticket.hierarchy_type=='3') {
-					vm.data.epics[ticket.id] = {
-						ticket: ticket,
-						shortName: epics[ticket.id] && epics[ticket.id].shortName ? epics[ticket.id].shortName : '',
-						children: []
+	/**
+	function getUpdatedComments(lastSync) {
+		// get all the activity since the last recorded comment sync
+		// return (in promise) the most recent comment update date
+		var qObj = {
+			parms: {
+				space_id: vm.data.selectedSpace.id,
+				per_page: 100,
+				page: 1
+			}
+		}
+		if (lastSync) qObj.parms.from = $filter('date')(lastSync,'dd-MM-yyyy hh-mm');
+		return as.getActivity(qObj).then(function(activity) {
+		// Collect ONLY the ticket comments ticketids
+			var tickets = vm.data.tickets.concat(vm.data.hiddenTickets);
+			var commentedTickets = []
+			activity.forEach(function(act) {
+				if (act.object=='Ticket Comment') {
+					if (!act.ticket) {
+						// seldom happens.  Maybe only when the comment text is edited
+						// TODO: search all tickets for the comment id and use the found ticket??
+						var t = act.ticket
+					} else {
+						var ticket = getFromList(act.ticket.id,tickets,'id');
+						if (!ticket) {
+							var t = ticket; // ticket is not here in downloaded tickets?
+						} else {
+							var idx = commentedTickets.indexOf(ticket);
+							if (idx<0) commentedTickets.push(ticket)
+						}
 					}
 				}
 			});
+		// get all comments for the selected tickets (more data, but vastly less logic)
+			var promises = commentedTickets.map(function(ticket) {
+				//if (testId == comment.id) return proms;
+				// Retrieve the entire comment from the API
+				var p = getTicketComments(ticket,vm.data.selectedSpace.id);
+				return p // return promise array
+			})
+			$q.all(promises).then(function(results) {
+				vm.data.updateStatus.lastCommentActivitySynced=new Date();
+				aps.saveDataObjects(['updateStatus','comments']);
+			});
 		});
-		aps.saveData('epics');
+	}
+	**/
+	function syncAllComments() {
+		// get comments for every ticket in the list
+		//vm.data.comments={};
+		var tasks = [];
+			vm.data.tickets.forEach(function(ticket) {
+				tasks.push(getTicketComments(ticket.number,vm.data.selectedSpace.id,true))
+			});
+		$q.all(tasks).then(function() {
+			aps.saveData('comments');
+		})
+	}
+	
+	function getTicketComments(ticket,spaceId,dontSave) {	
+		return as.getComments({
+			spaceId: spaceId || vm.data.selectedSpace.id,
+			ticketNumber: ticket.number
+		}).then(function(data) {
+			vm.data.comments[ticket.id]=data;
+			if (!dontSave) {
+				aps.saveData('comments');
+			}
+		})
+	}
+
+	function toggleCommentSync() {
+		vm.data.updateStatus.comments.syncEnabled = !vm.data.updateStatus.comments.syncEnabled;
+		if (vm.data.updateStatus.comments.syncEnabled) {
+			if (vm.data.updateStatus.comments.lastCommentActivitySynced) {
+				getUpdatedComments(vm.data.updateStatus.comments.lastCommentActivitySynced);
+			} else {
+				vm.data.updateStatus.comments.lastCommentActivitySynced == new Date();
+				syncAllComments();
+			}
+		} else {
+			// anything need to be done when turning off comment sync?
+		}
+	}
+	
+	// When adding a comment through the ui
+	function saveComment(ticket,comment) {
+		var qObj = {
+			spaceId: vm.data.selectedSpace.id,
+			ticketNumber: ticket.number,
+			data: {comment:comment}
+		};
+		as.saveComment(qObj).then(function(result) {
+			var c = result.data;
+			if (!vm.data.comments[ticket.id]) vm.data.comments[ticket.id] = [];
+			vm.data.comments[ticket.id].push(c);
+			aps.saveData('comments');
+		});
 	}
 	
 	function toggle(obj, prop, event ) {
@@ -521,6 +711,19 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		obj[prop] = !obj[prop];
 	}
 	
+	function parseTicketChanges(text) {
+		var changes = text.split("\n- - ");
+		changes.shift();
+		var parsedChanges = changes.map(function(change) {
+			var changeParts = change.split('\n  - ');
+			if (changeParts.length>3) {
+			}
+			return changeParts[0] + ': ' + changeParts[1] + " became " + changeParts[2];
+		});
+		return parsedChanges.join(';  ');
+	}
+	
+	// take a chunk out of the middle of a long string, like if you want ticket descriptions to be shortened
 	function abbreviate(text, startLength, endLength, elipsis) {
 		elipsis = elipsis || '...';
 		startLength = isFinite(startLength) ? startLength : 20;
@@ -531,7 +734,8 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 	
 	function parseDescription(ticket) {
 	// parse sections: Technical Description, Tech, TD; Friendly Description, FD, description; Location, L, Loc;
-	//									Testing, T, Test, Test<ing> Ideas; Reported By, R, Reported, Reporter, RB; Security, Auth, Sec, S, A , Role R Roles
+	//								Testing, T, Test, Test<ing> Ideas; Reported By, R, Reported, Reporter, RB; 
+	//								Security, Auth, Sec, S, A , Role R Roles
 		var d = ticket.description;
 		var parsed = {};
 		var delim = "_@&@_"; // delimiter
@@ -559,133 +763,93 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 		}
 		ticket.parsed = parsed;		
 	}
+	
+	// A ticket is valid if certain parsed categories are provided
 	function isValidTicket(ticket) {
 		if (!ticket.parsed) parseDescription(ticket);
 		return (ticket.parsed.T && ticket.parsed.L && (ticket.parsed.TD || ticket.parsed.FD || ticket.parsed.D));
 	}
 
+	// A list of tickets with the same change to each of them.  The property being changed and the new value is provided
 	function updateTickets(tickets,prop,newVal) {
 		tickets = tickets || [];
 		var oldVal;
+		var tasks = [];
 		tickets.forEach(function(ticket) {
-			getValueByPropPath(prop,ticket,newVal);
-			if (oldVal==newVal) return $q.when(ticket);
-			var idx = vm.data.tickets.indexOf(ticket);
-			updateTicket(ticket,prop,newVal,oldVal)
-				.then(function() {
-					aps.saveDataObjects(['tickets','hiddenTickets','ticketCount','hiddenTicketCount'])
-					//selectedTickets.splice(selectedTickets.indexOf(ticket),1);
-				},function(err) {
-					ticket.updateFailure=true;
-					$timeout(function() {
-						delete ticket.updateSuccess;
-					},1000);
-					//selectedTickets.splice(selectedTickets.indexOf(ticket),1);
-				});	
+			oldVal=getValueByPropPath(prop,ticket,newVal);
+			if (oldVal!=newVal) {
+				var idx = vm.data.tickets.indexOf(ticket);
+				var p = updateTicket(ticket,prop,newVal,oldVal,true);
+				tasks.push(p);
+			}
 		});
-		
+		$q.all(tasks).finally(function() {
+					aps.saveDataObjects(['tickets','hiddenTickets','ticketCount','hiddenTicketCount']);
+					resetCounts();
+		});		
 	}
 	
-	function updateTicket(ticket, propName, propValue, oldValue) {
+	function updateTicket(ticket, propName, propValue, oldValue,ignoreResetCounts) {
 		var uData = {};
+		// make sure the property, by path, exists and set to propvalue
 		initPropPath(uData,propName,propValue);
-		//uData[propName]=propValue;
 		
 		return as.updateTicket({
-			spaceId: vm.data.selectedSpace.id,
+			spaceId: ticket.space_id,
 			ticketNumber: ticket.number,
 			data: uData
 		}).success(function(data) {
-			var newTicket = angular.copy(ticket);
-			setValueByPropPath(propName,newTicket,propValue);
-			addOrUpdateTicket(newTicket); // push through addOrUpdateTicket so that proper counting prop counting and maint can happen
-			newTicket.updateSuccess=true;
+			//var newTicket = angular.copy(ticket);
+			setValueByPropPath(propName,ticket,propValue);
+			//addOrUpdateTicket(newTicket); // push through addOrUpdateTicket so that proper counting prop counting and maint can happen
+			ticket.updateSuccess=true;
 			$timeout(function() {
-				delete newTicket.updateSuccess;
+				delete ticket.updateSuccess;
 			},1000);
 			return newTicket;
 		}).error(function(err) {
 			console.dir(err);
-			setValueByPropPath(propName,ticket,oldValue);
+			//setValueByPropPath(propName,ticket,oldValue);
 			ticket.updateFailure=true;
 			$timeout(function() {
-				delete ticket.updateSuccess;
+				delete ticket.updateFailure;
 			},1000);
-
 			return err
+		}).finally(function() {
+			if (!ignoreResetCounts) {
+				resetCounts();
+			}
 		});
 	}
-	
-	function selectMilestone() {
-		//getTickets();
-	}
-	// determine whether the new ticket is an updated ticket and respond accordingly
-	function addOrUpdateTicket(ticket) {
-		//HACK: Direct references to the two global arrays because I'm lazy and it is easiest
-		var oldTicket = null, index = -1, ticketArray
-		// look in both collections of tickets to see if it needs to be update or simply saved as new
-		[vm.data.tickets,vm.data.hiddenTickets].some(function(tickets) {
-			if (!tickets) return false;
-			return tickets.some(function(t,idx) {
-				if (!oldTicket && t.id == ticket.id) {
-					oldTicket = t;
-					index = idx;
-					ticketArray = tickets;
-					return true;
-				}
-			});
-		})
-		
-		if (oldTicket) {
-			var udpateHidden = !vm.showCompletedMilestones 
-													&& vm.data.milestones[oldTicket.milestone_id].is_completed;
-			if (updateHidden) { // remove from counts
-				updateTicketCount(oldTicket,vm.data.hiddenTicketCount,true);
-				//vm.data.hiddenTickets.splice(index,1);
-			} else {
-				updateTicketCount(oldTicket,vm.data.ticketCount,true);
-				//vm.data.tickets.splice(index,1);
-			}
-		}
-		var isCompleted = vm.data.milestones[ticket.milestone_id].is_completed;
-		var updateHidden = !vm.showCompletedMilestones && isCompleted
-		if (updateHidden) {
-			if (!oldTicket) vm.data.hiddenTickets.push(ticket);
-			updateTicketCount(ticket,vm.data.hiddenTicketCount);
-		} else {
-			if (!oldTicket) vm.data.tickets.push(ticket);
-			updateTicketCount(ticket,vm.data.ticketCount);
-		}
-		if (oldTicket) angular.merge(oldTicket,ticket);
-	}
-	
+
 	function resetCounts() {
 		vm.data.ticketCount = {};
 		vm.data.hiddenTicketCount = {};
 		
-		var openTickets = [], hiddenTickets = [];
-		[vm.data.tickets,vm.data.hiddenTickets].forEach(function(tickets) {
-			tickets.forEach(function(ticket) {
-				vm.refreshCurrentTicket++;
-				var milestone = vm.data.milestones[ticket.milestone_id];
-				var isHidden = !vm.showCompletedMilestones && milestone && milestone.is_completed;
-				if (isHidden) {
-					updateTicketCount(ticket,vm.data.hiddenTicketCount);
-					hiddenTickets.push(ticket);
-				} else {
-					updateTicketCount(ticket,vm.data.ticketCount);
-					openTickets.push(ticket);
-				}
-			});
+		//var hiddenTickets = [];
+		vm.data.tickets.forEach(function(ticket) {
+			vm.refreshCurrentTicket++;
+			if (isTicketHidden(ticket)) {
+				updateTicketCount(ticket,vm.data.hiddenTicketCount);
+				//hiddenTickets.push(ticket);
+			} else {
+				updateTicketCount(ticket,vm.data.ticketCount);
+			}
 		});
-		vm.data.tickets=openTickets;
-		vm.data.hiddenTickets=hiddenTickets;
+		//vm.data.hiddenTickets=hiddenTickets;
 		vm.resetSuccess=true;
 		$timeout(function() { vm.resetSuccess=false },1000);
 	}
 	
+	function isTicketHidden(ticket) {
+			var milestone = vm.data.milestones[ticket.milestone_id];
+			var isHidden = !vm.showCompletedMilestones && milestone && milestone.is_completed;
+			return isHidden;
+	}		
+	
 	function getUpdatedTickets(lastUpdatedDate) {
-		lastUpdatedDate = lastUpdatedDate || new Date('2006-01-01')
+		lastUpdatedDate = lastUpdatedDate || new Date('2006-01-01');
+		var mostRecentUpdateDate = lastUpdatedDate;
 		vm. ticketsDownloading = true;
 		return as.getUpdatedTickets({
 			spaceId: vm.data.selectedSpace.id,
@@ -706,33 +870,25 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 					}
 				});
 				return endDownload;
-			},
-			completionHandler: function(pageCount) {
-				vm.data.ticketsDownloading = false;
 			}
-		}).success(function(AllDownloaded) {
-			vm.data.lastCompletedUpdateDate = new Date();
-		}).error(function(err) {
-			throw err;
-		})
+		}).then(function(allTickets) {
+			vm.data.ticketsDownloading=false;
+			if (angular.isArray(allTickets)) {
+				allTickets.forEach(function(ticket) {
+					if (new Date(ticket.updated_at)>mostRecentUpdateDate) mostRecentUpdateDate=new Date(ticket.updated_at);
+				})
+				vm.data.lastCompletedUpdateDate = mostRecentUpdateDate;
+			};
+		});
 	}
 	
-		// initialize an object path for properties that don't exist. 
-	// DO NOT overwrite the target if it already exists
-	// return the property being initialized (or found, if already initialized
-	function initPropPath(obj,propPath,dflt) {
-		dflt = dflt || {};
-		rval = null
-		var curObj = obj || {}
-		var props = propPath.split('.');
-		for (var i = 0; i<props.length; i++) {
-			if (!curObj[props[i]]) {
-				curObj[props[i]]= i==props.length-1 ? dflt : {};
-			}
-			curObj = curObj[props[i]];
-		} 
-		return curObj;
+	function addOrUpdateTicket(ticket) {
+		var oldTicket = getFromList(ticket.id,vm.data.tickets,'id');
+		var idx = vm.data.tickets.indexOf(oldTicket);
+		if (idx>-1) vm.data.tickets[idx] = ticket;
+		else vm.data.tickets.push(ticket);
 	}
+		
 	// Add or remove items from the ticketCount object.  Categorizing tickets for filters
 	function updateCount(propName,ticket,newValue,oldValue,unassignedValue,countObj) {
 		countObj = countObj || vm.data.ticketCount;
@@ -759,8 +915,7 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 	}
 	function updateTicketCount(ticket,countObj,isRemoval) {
 		countObj = countObj || vm.data.ticketCount;
-		
-		
+			
 		var prop = 'assigned_to_id'
 		updateCount(prop,ticket,
 								!isRemoval ? getValueByPropPath(prop,ticket,vm._unassigned) : vm._ignore,
@@ -789,17 +944,7 @@ function assemblaControllerFunction($q, $http, $scope, $filter,$timeout, as, aps
 								vm._blank,countObj);
 			}
 		}
-		/**
-		if (ticket.hierarchy_type=='3') { // if this is an epic
-			if (!vm.data.epics[ticket.id]) vm.data.epics[ticket.id] = {}
-			var t = vm.data.epics[ticket.id];
-			t.title = ticket.title;
-			t.number = ticket.number;
-			t.id = ticket.id
-		}
-		**/
-			
-		
+
 	}
 
 }
